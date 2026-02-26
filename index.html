@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Telegram Connected Admin Panel</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+        .admin-box { width: 500px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #517da2; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; }
+        .hidden { display: none; }
+        .preview-area { margin-top: 10px; text-align: center; }
+        button { width: 100%; padding: 12px; background: #517da2; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; font-weight: bold; }
+        .list-item { background: #f9f9f9; padding: 10px; margin-top: 10px; border-radius: 8px; border-left: 5px solid #517da2; position: relative; font-size: 13px; }
+        .del-btn { position: absolute; right: 10px; top: 10px; color: red; cursor: pointer; font-weight: bold; }
+        .status-msg { font-size: 12px; color: green; text-align: center; margin-top: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="admin-box">
+    <h2>Bot Auto-Reply Manager</h2>
+    
+    <label>User Keyword (Trigger):</label>
+    <input type="text" id="trigger" placeholder="e.g. video, hello">
+
+    <label>Reply Type:</label>
+    <select id="reply-type" onchange="toggleFields()">
+        <option value="text">Plain Text</option>
+        <option value="image">Image (Gallery से)</option>
+        <option value="video">Video (Gallery से)</option>
+        <option value="link">Button / Link</option>
+    </select>
+
+    <div id="text-field">
+        <label>Reply Message:</label>
+        <input type="text" id="response-text" placeholder="Enter message...">
+    </div>
+
+    <div id="gallery-field" class="hidden">
+        <label>Select File from Gallery:</label>
+        <input type="file" id="file-input" accept="image/*,video/*" onchange="previewFile()">
+        <div class="preview-area">
+            <p id="loading-text" class="hidden">Processing file...</p>
+            <img id="img-preview" style="max-width:100%; border-radius:8px; display:none;">
+            <video id="vid-preview" style="max-width:100%; border-radius:8px; display:none;" controls></video>
+        </div>
+    </div>
+
+    <div id="link-field" class="hidden">
+        <label>Button Label:</label>
+        <input type="text" id="btn-label" placeholder="Click Here">
+        <label>Target URL:</label>
+        <input type="text" id="target-url" placeholder="https://google.com">
+    </div>
+
+    <button id="save-btn" onclick="saveAdvancedReply()">Save & Sync to Telegram</button>
+    <p id="status" class="status-msg">Sent to Telegram ✅</p>
+
+    <div id="reply-list"></div>
+</div>
+
+<script>
+    // Aapka Telegram Config
+    const BOT_TOKEN = '7938751733:AAEdQC9P6d2T_Q8Ub7pCW3IhmjgxyT5KKkg';
+    const CHAT_ID = '6262892880';
+    
+    let base64File = ""; 
+
+    function toggleFields() {
+        const type = document.getElementById('reply-type').value;
+        document.getElementById('text-field').className = (type === 'text' || type === 'link') ? '' : 'hidden';
+        document.getElementById('gallery-field').className = (type === 'image' || type === 'video') ? '' : 'hidden';
+        document.getElementById('link-field').className = (type === 'link') ? '' : 'hidden';
+        resetPreviews();
+    }
+
+    function resetPreviews() {
+        document.getElementById('img-preview').style.display = 'none';
+        document.getElementById('vid-preview').style.display = 'none';
+        base64File = "";
+    }
+
+    function previewFile() {
+        const file = document.getElementById('file-input').files[0];
+        const reader = new FileReader();
+        const type = document.getElementById('reply-type').value;
+
+        if (file) {
+            document.getElementById('loading-text').classList.remove('hidden');
+            reader.readAsDataURL(file);
+            reader.onload = function () {
+                base64File = reader.result;
+                document.getElementById('loading-text').classList.add('hidden');
+                if (type === 'image') { document.getElementById('img-preview').src = base64File; document.getElementById('img-preview').style.display = 'block'; }
+                else if (type === 'video') { document.getElementById('vid-preview').src = base64File; document.getElementById('vid-preview').style.display = 'block'; }
+            };
+        }
+    }
+
+    async function saveAdvancedReply() {
+        const trigger = document.getElementById('trigger').value.toLowerCase().trim();
+        const type = document.getElementById('reply-type').value;
+        if(!trigger) return alert("Trigger word likhen!");
+
+        let data = { type: type };
+        let msgForTelegram = `🚀 *New Auto-Reply Set*\n\nKeyword: ${trigger}\nType: ${type}`;
+
+        if(type === 'text') {
+            data.val = document.getElementById('response-text').value;
+        } else if(type === 'image' || type === 'video') {
+            if(!base64File) return alert("Gallery se file select karein!");
+            data.val = base64File;
+        } else if(type === 'link') {
+            data.val = document.getElementById('response-text').value;
+            data.btnLabel = document.getElementById('btn-label').value;
+            data.btnUrl = document.getElementById('target-url').value;
+        }
+
+        // 1. Save to Local Storage
+        try {
+            let replies = JSON.parse(localStorage.getItem('adv_replies')) || {};
+            replies[trigger] = data;
+            localStorage.setItem('adv_replies', JSON.stringify(replies));
+            
+            // 2. Send Notification to Telegram
+            const teleUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msgForTelegram)}&parse_mode=Markdown`;
+            await fetch(teleUrl);
+            
+            document.getElementById('status').style.display = 'block';
+            setTimeout(() => { location.reload(); }, 1500);
+        } catch (e) {
+            alert("Error: File size too big for browser storage!");
+        }
+    }
+
+    function showReplies() {
+        const list = document.getElementById('reply-list');
+        const replies = JSON.parse(localStorage.getItem('adv_replies')) || {};
+        list.innerHTML = '<h3 style="margin-top:20px">Current Rules:</h3>';
+        for(let key in replies) {
+            list.innerHTML += `<div class="list-item">
+                <b>User:</b> ${key} | <b>Bot:</b> ${replies[key].type}
+                <span class="del-btn" onclick="deleteReply('${key}')">✖</span>
+            </div>`;
+        }
+    }
+
+    function deleteReply(key) {
+        let replies = JSON.parse(localStorage.getItem('adv_replies'));
+        delete replies[key];
+        localStorage.setItem('adv_replies', JSON.stringify(replies));
+        location.reload();
+    }
+    showReplies();
+</script>
+</body>
+</html>
