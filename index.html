@@ -2,154 +2,238 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gallery Upload Auto-Reply Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart File Downloader</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
-        .admin-box { width: 500px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #517da2; margin-bottom: 20px; }
-        label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; }
-        .hidden { display: none; }
-        .preview-area { margin-top: 10px; text-align: center; }
-        #file-preview { max-width: 100%; max-height: 150px; border-radius: 8px; display: none; }
-        button { width: 100%; padding: 12px; background: #517da2; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; font-weight: bold; }
-        .list-item { background: #f9f9f9; padding: 10px; margin-top: 10px; border-radius: 8px; border-left: 5px solid #517da2; position: relative; font-size: 13px; }
-        .del-btn { position: absolute; right: 10px; top: 10px; color: red; cursor: pointer; font-weight: bold; }
+        :root {
+            --primary: #0088cc;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            padding: 30px 15px;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h2 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.6rem;
+        }
+
+        #status {
+            text-align: center;
+            padding: 12px;
+            background: #e1f5fe;
+            color: #0277bd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .file-card {
+            border: 1px solid #eee;
+            background: #fafafa;
+            border-radius: 15px;
+            padding: 18px;
+            transition: 0.3s ease;
+        }
+
+        .file-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .icon {
+            font-size: 30px;
+            margin-right: 15px;
+        }
+
+        .details {
+            flex: 1;
+        }
+
+        .name {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 15px;
+            word-break: break-all;
+        }
+
+        .size {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #0077b5;
+            box-shadow: 0 5px 15px rgba(0,136,204,0.3);
+        }
+
+        .btn:disabled {
+            background: #abbac2;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
 
-<div class="admin-box">
-    <h2>Bot Auto-Reply Manager</h2>
-    
-    <label>User Keyword (Sawal):</label>
-    <input type="text" id="trigger" placeholder="e.g. video, hello">
-
-    <label>Reply Type:</label>
-    <select id="reply-type" onchange="toggleFields()">
-        <option value="text">Plain Text</option>
-        <option value="image">Image (Gallery से)</option>
-        <option value="video">Video (Gallery से)</option>
-        <option value="link">Button / Link</option>
-    </select>
-
-    <div id="text-field">
-        <label>Reply Message:</label>
-        <input type="text" id="response-text" placeholder="Enter message...">
+<div class="container">
+    <div class="header">
+        <h2>Download Center</h2>
+        <p style="font-size: 12px; color: #777;">Last 2 Files from Telegram</p>
     </div>
 
-    <div id="gallery-field" class="hidden">
-        <label id="file-label">Select File from Gallery:</label>
-        <input type="file" id="file-input" accept="image/*,video/*" onchange="previewFile()">
-        <div class="preview-area">
-            <p id="loading-text" class="hidden">Converting file... Please wait.</p>
-            <img id="img-preview" style="max-width:100%; border-radius:8px; display:none;">
-            <video id="vid-preview" style="max-width:100%; border-radius:8px; display:none;" controls></video>
-        </div>
-    </div>
-
-    <div id="link-field" class="hidden">
-        <label>Button Label:</label>
-        <input type="text" id="btn-label" placeholder="Click Here">
-        <label>Target URL:</label>
-        <input type="text" id="target-url" placeholder="https://google.com">
-    </div>
-
-    <button id="save-btn" onclick="saveAdvancedReply()">Save Auto-Reply</button>
-
-    <div id="reply-list"></div>
+    <div id="status">Scanning for files...</div>
+    <div id="file-container" class="file-list"></div>
 </div>
 
 <script>
-    let base64File = ""; // File data store karne ke liye
+    const BOT_TOKEN = '8644017950:AAGyGi3ttEEZ0KuSY6zgr_4HSI3g_0wUFec';
 
-    function toggleFields() {
-        const type = document.getElementById('reply-type').value;
-        document.getElementById('text-field').className = (type === 'text' || type === 'link') ? '' : 'hidden';
-        document.getElementById('gallery-field').className = (type === 'image' || type === 'video') ? '' : 'hidden';
-        document.getElementById('link-field').className = (type === 'link') ? '' : 'hidden';
+    async function fetchFiles() {
+        const status = document.getElementById('status');
+        const container = document.getElementById('file-container');
         
-        // Reset previews
-        document.getElementById('img-preview').style.display = 'none';
-        document.getElementById('vid-preview').style.display = 'none';
-        base64File = "";
-    }
+        try {
+            // Offset use kiya hai taaki purane messages bhi mil sakein
+            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?limit=100&offset=-100`);
+            const data = await res.json();
 
-    // Gallery se file select karke Base64 banana
-    function previewFile() {
-        const file = document.getElementById('file-input').files[0];
-        const reader = new FileReader();
-        const type = document.getElementById('reply-type').value;
+            if (data.ok && data.result.length > 0) {
+                // Filter documents from private chat OR channel
+                const docs = data.result
+                    .map(u => u.message || u.channel_post)
+                    .filter(m => m && m.document)
+                    .slice(-2) // Last 2 files
+                    .reverse();
 
-        if (file) {
-            document.getElementById('loading-text').classList.remove('hidden');
-            reader.readAsDataURL(file);
-            reader.onload = function () {
-                base64File = reader.result;
-                document.getElementById('loading-text').classList.add('hidden');
-                
-                if (type === 'image') {
-                    const img = document.getElementById('img-preview');
-                    img.src = base64File;
-                    img.style.display = 'block';
-                } else if (type === 'video') {
-                    const vid = document.getElementById('vid-preview');
-                    vid.src = base64File;
-                    vid.style.display = 'block';
+                if (docs.length === 0) {
+                    status.innerText = "❌ No files found. Bot ko file bhej kar refresh karein.";
+                    return;
                 }
-            };
+
+                status.style.display = 'none';
+                container.innerHTML = '';
+
+                docs.forEach(msg => {
+                    const doc = msg.document;
+                    const card = document.createElement('div');
+                    card.className = 'file-card';
+                    const sizeMB = (doc.file_size / (1024 * 1024)).toFixed(2);
+                    
+                    card.innerHTML = `
+                        <div class="file-info">
+                            <div class="icon">📁</div>
+                            <div class="details">
+                                <span class="name">${doc.file_name}</span>
+                                <span class="size">${sizeMB} MB</span>
+                            </div>
+                        </div>
+                        <button class="btn" onclick="downloadFile('${doc.file_id}', '${doc.file_name}', this)">
+                            Download & Open
+                        </button>
+                    `;
+                    container.appendChild(card);
+                });
+            } else {
+                status.innerText = "⚠️ Bot inactive. Nayi file send karein!";
+            }
+        } catch (err) {
+            status.innerText = "🔌 Connection Error. Internet check karein.";
         }
     }
 
-    function saveAdvancedReply() {
-        const trigger = document.getElementById('trigger').value.toLowerCase().trim();
-        const type = document.getElementById('reply-type').value;
-        
-        if(!trigger) return alert("Trigger word likhen!");
-
-        let data = { type: type };
-
-        if(type === 'text') {
-            data.val = document.getElementById('response-text').value;
-        } else if(type === 'image' || type === 'video') {
-            if(!base64File) return alert("Pehle Gallery se file select karein!");
-            data.val = base64File; // Base64 data save hoga
-        } else if(type === 'link') {
-            data.val = document.getElementById('response-text').value;
-            data.btnLabel = document.getElementById('btn-label').value;
-            data.btnUrl = document.getElementById('target-url').value;
-        }
+    async function downloadFile(fileId, fileName, btn) {
+        const oldText = btn.innerText;
+        btn.innerText = "DOWNLOADING...";
+        btn.disabled = true;
 
         try {
-            let replies = JSON.parse(localStorage.getItem('adv_replies')) || {};
-            replies[trigger] = data;
-            localStorage.setItem('adv_replies', JSON.stringify(replies));
-            alert("Saved Successfully!");
-            location.reload();
+            // Get File Path from Telegram
+            const pathRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+            const pathData = await pathRes.json();
+
+            if (pathData.ok) {
+                const downloadUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
+
+                // Fetching as blob to force browser to handle it
+                const fileRes = await fetch(downloadUrl);
+                const blob = await fileRes.blob();
+                const blobUrl = URL.createObjectURL(blob);
+
+                // Hidden link for download
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Open in new tab (PDF/Images/Text ke liye)
+                window.open(blobUrl, '_blank');
+            } else {
+                alert("File path nahi mila!");
+            }
         } catch (e) {
-            alert("File size bahut bada hai! Chhota video try karein (Max 2-4MB).");
+            alert("Error: " + e.message);
+        } finally {
+            btn.innerText = oldText;
+            btn.disabled = false;
         }
     }
 
-    function showReplies() {
-        const list = document.getElementById('reply-list');
-        const replies = JSON.parse(localStorage.getItem('adv_replies')) || {};
-        list.innerHTML = '<h3 style="margin-top:20px">Current Rules:</h3>';
-        for(let key in replies) {
-            list.innerHTML += `<div class="list-item">
-                <b>User says:</b> ${key} | <b>Bot sends:</b> ${replies[key].type}
-                <span class="del-btn" onclick="deleteReply('${key}')">✖</span>
-            </div>`;
-        }
-    }
-
-    function deleteReply(key) {
-        let replies = JSON.parse(localStorage.getItem('adv_replies'));
-        delete replies[key];
-        localStorage.setItem('adv_replies', JSON.stringify(replies));
-        location.reload();
-    }
-    showReplies();
+    // Auto load on start
+    fetchFiles();
 </script>
+
 </body>
-    </html>
+</html>
