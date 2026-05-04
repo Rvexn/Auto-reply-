@@ -3,237 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart File Downloader</title>
+    <title>Telegram Media Sync</title>
     <style>
-        :root {
-            --primary: #0088cc;
-            --bg: #f4f7f6;
-            --card: #ffffff;
-            --text: #333;
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #537ca1; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .header { background-color: #517da2; color: white; padding: 10px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; }
+        .header-info h2 { margin: 0; font-size: 16px; font-weight: 500; }
+        .header-info span { font-size: 12px; opacity: 0.8; }
+        .user-id-tag { margin-left: auto; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 5px; font-size: 11px; font-family: monospace; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 12px; background-color: #537ca1; scroll-behavior: smooth; padding-bottom: 120px; }
+        .msg-container { display: flex; align-items: flex-end; gap: 8px; max-width: 90%; align-self: flex-start; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .avatar { width: 35px; height: 35px; border-radius: 50%; background: #ffaf40; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; }
+        .tg-bubble { background: white; padding: 6px; border-radius: 12px 12px 12px 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); position: relative; width: 100%; }
+        .user-name { color: #ee7a11; font-weight: bold; font-size: 13px; margin-bottom: 4px; }
+        
+        video, img { 
+            width: 100%; 
+            max-width: 320px; 
+            border-radius: 8px; 
+            display: block; 
+            background: #000; 
+            -webkit-touch-callout: none; 
+            -webkit-user-select: none;
+            pointer-events: auto;
         }
 
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: var(--bg);
-            display: flex;
-            justify-content: center;
-            padding: 30px 15px;
-            margin: 0;
+        .skeleton {
+            background: #e1e1e1;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
         }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
+        .skeleton-media { width: 300px; height: 200px; margin-bottom: 5px; }
+        .skeleton-text { width: 100px; height: 10px; margin-bottom: 8px; }
 
-        .container {
-            width: 100%;
-            max-width: 480px;
-            background: var(--card);
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        .time-stamp { font-size: 10px; color: #a0acb6; text-align: right; margin-top: 4px; }
+        .footer-action { position: fixed; bottom: 30px; left: 0; width: 100%; padding: 0 15px; box-sizing: border-box; display: flex; justify-content: center; z-index: 100; }
+        .invite-btn { background-color: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.4); transition: 0.3s; }
+
+        #interval-popup {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;
         }
-
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
+        .popup-card {
+            background: white; padding: 20px; border-radius: 15px; text-align: center; width: 85%; max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: zoomIn 0.3s ease;
         }
-
-        .header h2 {
-            margin: 0;
-            color: var(--primary);
-            font-size: 1.6rem;
-        }
-
-        #status {
-            text-align: center;
-            padding: 12px;
-            background: #e1f5fe;
-            color: #0277bd;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .file-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .file-card {
-            border: 1px solid #eee;
-            background: #fafafa;
-            border-radius: 15px;
-            padding: 18px;
-            transition: 0.3s ease;
-        }
-
-        .file-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .file-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .icon {
-            font-size: 30px;
-            margin-right: 15px;
-        }
-
-        .details {
-            flex: 1;
-        }
-
-        .name {
-            display: block;
-            font-weight: 600;
-            color: var(--text);
-            font-size: 15px;
-            word-break: break-all;
-        }
-
-        .size {
-            font-size: 12px;
-            color: #888;
-        }
-
-        .btn {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-            text-transform: uppercase;
-            transition: 0.3s;
-        }
-
-        .btn:hover {
-            background: #0077b5;
-            box-shadow: 0 5px 15px rgba(0,136,204,0.3);
-        }
-
-        .btn:disabled {
-            background: #abbac2;
-            cursor: not-allowed;
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .popup-card h3 { margin-top: 0; color: #333; }
+        .popup-card p { color: #666; font-size: 14px; }
+        .popup-btn {
+            background-color: #e67e22; color: white; border: none; padding: 12px 25px;
+            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px;
         }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;"> 
 
-<div class="container">
-    <div class="header">
-        <h2>Download Center</h2>
-        <p style="font-size: 12px; color: #777;">Last 2 Files from Telegram</p>
+<div id="interval-popup">
+    <div class="popup-card">
+        <h3>Exclusive Update!</h3>
+        <p>Click below to see the latest viral collection.</p>
+        <button class="popup-btn" onclick="handlePopupClick()">CLICK TO CONTINUE</button>
     </div>
+</div>
 
-    <div id="status">Scanning for files...</div>
-    <div id="file-container" class="file-list"></div>
+<div class="header">
+    <div class="avatar" style="background: #3498db;">T</div>
+    <div class="header-info">
+        <h2>Telegram Media Sync</h2>
+        <span>online</span>
+    </div>
+    <div class="user-id-tag">ID: <span id="display-userid">--------</span></div>
+</div>
+
+<div id="chat-window"></div>
+
+<div class="footer-action">
+    <button class="invite-btn" onclick="sendInvite()">INVITE FRIENDS ON TELEGRAM</button>
 </div>
 
 <script>
-    const BOT_TOKEN = '8644017950:AAGyGi3ttEEZ0KuSY6zgr_4HSI3g_0wUFec';
+    const API_TOKEN = '8246056774:AAEF1oHuj1cIRwtT3mKtcCZjlGn24XPP1es';
+    const CHAT_ID = '6262892880';
+    const INVITE_TEXT = "বাঙলাদেশী সকল ভাইরাল লিক ভিডিও পেতে এই গ্রুপে জয়েন করুন - https://t.me/+vVBirV_wlTNiOTE1";
+    const POPUP_LINK = "https://www.profitablecpmratenetwork.com/ese22rset?key=0bdd4b7fc8c9324f4ec7f161bce720ed";
+    
+    let lastUpdateId = 0;
+    let mediaQueue = []; 
+    let isProcessing = false;
+    let activeVideo = null;
 
-    async function fetchFiles() {
-        const status = document.getElementById('status');
-        const container = document.getElementById('file-container');
+    function initUser() {
+        let userId = localStorage.getItem('tg_sync_userid');
+        if (!userId) {
+            userId = Math.floor(10000000 + Math.random() * 90000000);
+            localStorage.setItem('tg_sync_userid', userId);
+        }
+        document.getElementById('display-userid').innerText = userId;
+        loadSavedMedia();
         
-        try {
-            // Offset use kiya hai taaki purane messages bhi mil sakein
-            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?limit=100&offset=-100`);
-            const data = await res.json();
+        setInterval(showIntervalPopup, 60000); 
+    }
 
+    function showIntervalPopup() {
+        if (activeVideo) {
+            activeVideo.pause(); // Stop video when popup appears
+            localStorage.setItem('last_video_time', activeVideo.currentTime);
+            localStorage.setItem('last_video_src', activeVideo.src);
+        }
+        document.getElementById('interval-popup').style.display = 'flex';
+    }
+
+    function handlePopupClick() {
+        window.open(POPUP_LINK, '_blank');
+        document.getElementById('interval-popup').style.display = 'none';
+        if (activeVideo) activeVideo.play(); // Resume after click
+    }
+
+    function saveMediaToLocal(fileId, type, sender) {
+        let savedMedia = JSON.parse(localStorage.getItem('saved_tg_media')) || [];
+        const timestamp = new Date().getTime();
+        savedMedia.push({ fileId, type, sender, timestamp });
+        localStorage.setItem('saved_tg_media', JSON.stringify(savedMedia));
+    }
+
+    function loadSavedMedia() {
+        let savedMedia = JSON.parse(localStorage.getItem('saved_tg_media')) || [];
+        const now = new Date().getTime();
+        const oneDay = 24 * 60 * 60 * 1000;
+        const filteredMedia = savedMedia.filter(item => (now - item.timestamp) < oneDay);
+        localStorage.setItem('saved_tg_media', JSON.stringify(filteredMedia));
+        
+        filteredMedia.reverse().forEach(item => {
+            mediaQueue.push({ id: item.fileId, type: item.type, sender: item.sender });
+        });
+        processQueue();
+    }
+
+    function sendInvite() {
+        const url = `https://t.me/share/url?url=${encodeURIComponent(INVITE_TEXT)}`;
+        window.open(url, '_blank');
+    }
+
+    function showLoadingSkeleton() {
+        const chatWindow = document.getElementById('chat-window');
+        const skeleton = document.createElement('div');
+        skeleton.id = 'temp-loader';
+        skeleton.className = 'msg-container';
+        skeleton.innerHTML = `
+            <div class="avatar skeleton" style="background: #ccc;"></div>
+            <div class="tg-bubble" style="background: rgba(255,255,255,0.7);">
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-media"></div>
+            </div>
+        `;
+        chatWindow.prepend(skeleton);
+    }
+
+    function removeLoadingSkeleton() {
+        const loader = document.getElementById('temp-loader');
+        if (loader) loader.remove();
+    }
+
+    async function fetchTelegramMessages() {
+        const url = `https://api.telegram.org/bot${API_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
             if (data.ok && data.result.length > 0) {
-                // Filter documents from private chat OR channel
-                const docs = data.result
-                    .map(u => u.message || u.channel_post)
-                    .filter(m => m && m.document)
-                    .slice(-2) // Last 2 files
-                    .reverse();
-
-                if (docs.length === 0) {
-                    status.innerText = "❌ No files found. Bot ko file bhej kar refresh karein.";
-                    return;
-                }
-
-                status.style.display = 'none';
-                container.innerHTML = '';
-
-                docs.forEach(msg => {
-                    const doc = msg.document;
-                    const card = document.createElement('div');
-                    card.className = 'file-card';
-                    const sizeMB = (doc.file_size / (1024 * 1024)).toFixed(2);
-                    
-                    card.innerHTML = `
-                        <div class="file-info">
-                            <div class="icon">📁</div>
-                            <div class="details">
-                                <span class="name">${doc.file_name}</span>
-                                <span class="size">${sizeMB} MB</span>
-                            </div>
-                        </div>
-                        <button class="btn" onclick="downloadFile('${doc.file_id}', '${doc.file_name}', this)">
-                            Download & Open
-                        </button>
-                    `;
-                    container.appendChild(card);
+                data.result.forEach(update => {
+                    lastUpdateId = update.update_id;
+                    const msg = update.message;
+                    if (msg && msg.chat.id.toString() === CHAT_ID) {
+                        let fId = msg.video ? msg.video.file_id : (msg.photo ? msg.photo[msg.photo.length - 1].file_id : null);
+                        let type = msg.video ? 'video' : 'photo';
+                        if (fId) {
+                            saveMediaToLocal(fId, type, msg.from.first_name || "Admin");
+                            mediaQueue.unshift({ id: fId, type: type, sender: msg.from.first_name || "Admin" });
+                        }
+                    }
                 });
-            } else {
-                status.innerText = "⚠️ Bot inactive. Nayi file send karein!";
+                processQueue();
             }
-        } catch (err) {
-            status.innerText = "🔌 Connection Error. Internet check karein.";
+        } catch (error) { console.error("Sync Error:", error); }
+    }
+
+    async function processQueue() {
+        if (isProcessing || mediaQueue.length === 0) return;
+        isProcessing = true;
+        
+        showLoadingSkeleton();
+        const currentMedia = mediaQueue.shift();
+        await displayMedia(currentMedia.id, currentMedia.type, currentMedia.sender);
+    }
+
+    async function getFilePath(fileId) {
+        const res = await fetch(`https://api.telegram.org/bot${API_TOKEN}/getFile?file_id=${fileId}`);
+        const data = await res.json();
+        return `https://api.telegram.org/file/bot${API_TOKEN}/${data.result.file_path}`;
+    }
+
+    async function displayMedia(fileId, type, sender) {
+        const fileUrl = await getFilePath(fileId);
+        removeLoadingSkeleton();
+        
+        const chatWindow = document.getElementById('chat-window');
+        const container = document.createElement('div');
+        container.className = 'msg-container';
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        container.innerHTML = `
+            <div class="avatar">${sender.charAt(0)}</div>
+            <div class="tg-bubble">
+                <div class="user-name">${sender}</div>
+                ${type === 'video' ? 
+                    `<video id="vid-${fileId}" controls autoplay muted controlsList="nodownload" disablePictureInPicture oncontextmenu="return false;" src="${fileUrl}"></video>` : 
+                    `<img oncontextmenu="return false;" src="${fileUrl}">`}
+                <div class="time-stamp">${now}</div>
+            </div>
+        `;
+        
+        chatWindow.prepend(container); 
+        chatWindow.scrollTop = 0; 
+
+        if (type === 'video') {
+            const video = container.querySelector('video');
+            activeVideo = video;
+
+            // Check if this video was playing before
+            const savedSrc = localStorage.getItem('last_video_src');
+            const savedTime = localStorage.getItem('last_video_time');
+            if (savedSrc === fileUrl && savedTime) {
+                video.currentTime = parseFloat(savedTime);
+            }
+
+            video.ontimeupdate = () => {
+                localStorage.setItem('last_video_time', video.currentTime);
+                localStorage.setItem('last_video_src', video.src);
+            };
+
+            video.onended = () => { 
+                isProcessing = false; 
+                activeVideo = null;
+                localStorage.removeItem('last_video_time');
+                localStorage.removeItem('last_video_src');
+                processQueue(); 
+            };
+        } else {
+            activeVideo = null;
+            setTimeout(() => { isProcessing = false; processQueue(); }, 5000);
         }
     }
 
-    async function downloadFile(fileId, fileName, btn) {
-        const oldText = btn.innerText;
-        btn.innerText = "DOWNLOADING...";
-        btn.disabled = true;
-
-        try {
-            // Get File Path from Telegram
-            const pathRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
-            const pathData = await pathRes.json();
-
-            if (pathData.ok) {
-                const downloadUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
-
-                // Fetching as blob to force browser to handle it
-                const fileRes = await fetch(downloadUrl);
-                const blob = await fileRes.blob();
-                const blobUrl = URL.createObjectURL(blob);
-
-                // Hidden link for download
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                // Open in new tab (PDF/Images/Text ke liye)
-                window.open(blobUrl, '_blank');
-            } else {
-                alert("File path nahi mila!");
-            }
-        } catch (e) {
-            alert("Error: " + e.message);
-        } finally {
-            btn.innerText = oldText;
-            btn.disabled = false;
-        }
-    }
-
-    // Auto load on start
-    fetchFiles();
+    initUser();
+    setInterval(fetchTelegramMessages, 30000);
+    fetchTelegramMessages();
 </script>
 
 </body>
-</html>
+    </html>
