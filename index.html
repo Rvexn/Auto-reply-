@@ -3,266 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Media Sync</title>
+    <title>Telegram 24h Media Sync</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #537ca1; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .header { background-color: #517da2; color: white; padding: 10px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; }
         .header-info h2 { margin: 0; font-size: 16px; font-weight: 500; }
         .header-info span { font-size: 12px; opacity: 0.8; }
-        .user-id-tag { margin-left: auto; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 5px; font-size: 11px; font-family: monospace; }
         #chat-window { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 12px; background-color: #537ca1; scroll-behavior: smooth; padding-bottom: 120px; }
+        
+        #start-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #537ca1; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .start-btn { background-color: #2ecc71; color: white; border: none; padding: 20px 45px; border-radius: 50px; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 15px rgba(0,0,0,0.3); }
+
         .msg-container { display: flex; align-items: flex-end; gap: 8px; max-width: 90%; align-self: flex-start; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .avatar { width: 35px; height: 35px; border-radius: 50%; background: #ffaf40; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; }
-        .tg-bubble { background: white; padding: 6px; border-radius: 12px 12px 12px 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); position: relative; width: 100%; }
+        .avatar { width: 35px; height: 35px; border-radius: 50%; background: #ffaf40; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .tg-bubble { background: white; padding: 6px; border-radius: 12px 12px 12px 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); width: 100%; }
         .user-name { color: #ee7a11; font-weight: bold; font-size: 13px; margin-bottom: 4px; }
-        
-        video, img { 
-            width: 100%; 
-            max-width: 320px; 
-            border-radius: 8px; 
-            display: block; 
-            background: #000; 
-            -webkit-touch-callout: none; 
-            -webkit-user-select: none;
-            pointer-events: auto;
-        }
-
-        .skeleton {
-            background: #e1e1e1;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 8px;
-        }
-        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        
-        .skeleton-media { width: 300px; height: 200px; margin-bottom: 5px; }
-        .skeleton-text { width: 100px; height: 10px; margin-bottom: 8px; }
-
+        video, img { width: 100%; max-width: 320px; border-radius: 8px; display: block; background: #000; }
         .time-stamp { font-size: 10px; color: #a0acb6; text-align: right; margin-top: 4px; }
-        .footer-action { position: fixed; bottom: 30px; left: 0; width: 100%; padding: 0 15px; box-sizing: border-box; display: flex; justify-content: center; z-index: 100; }
-        .invite-btn { background-color: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.4); transition: 0.3s; }
-
-        #interval-popup {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;
-        }
-        .popup-card {
-            background: white; padding: 20px; border-radius: 15px; text-align: center; width: 85%; max-width: 320px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: zoomIn 0.3s ease;
-        }
-        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .popup-card h3 { margin-top: 0; color: #333; }
-        .popup-card p { color: #666; font-size: 14px; }
-        .popup-btn {
-            background-color: #e67e22; color: white; border: none; padding: 12px 25px;
-            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px;
-        }
+        
+        .footer-action { position: fixed; bottom: 30px; left: 0; width: 100%; padding: 0 15px; box-sizing: border-box; display: flex; justify-content: center; z-index: 10; }
+        .invite-btn { background-color: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; max-width: 450px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
     </style>
 </head>
-<body oncontextmenu="return false;"> 
+<body>
 
-<div id="interval-popup">
-    <div class="popup-card">
-        <h3>Exclusive Update!</h3>
-        <p>Click below to see the latest viral collection.</p>
-        <button class="popup-btn" onclick="handlePopupClick()">CLICK TO CONTINUE</button>
+<div id="start-overlay">
+    <div style="color: white; margin-bottom: 30px;">
+        <h1 style="margin: 0;">Media Player</h1>
+        <p>Auto-syncing Telegram Videos (24h History)</p>
     </div>
+    <button class="start-btn" onclick="startApp()">START STREAM</button>
 </div>
 
 <div class="header">
     <div class="avatar" style="background: #3498db;">T</div>
     <div class="header-info">
-        <h2>Telegram Media Sync</h2>
-        <span>online</span>
+        <h2>Telegram Sync Pro</h2>
+        <span id="status">ready</span>
     </div>
-    <div class="user-id-tag">ID: <span id="display-userid">--------</span></div>
 </div>
 
 <div id="chat-window"></div>
 
 <div class="footer-action">
-    <button class="invite-btn" onclick="sendInvite()">INVITE FRIENDS ON TELEGRAM</button>
+    <button class="invite-btn" onclick="sendInvite()">INVITE FRIENDS</button>
 </div>
 
 <script>
     const API_TOKEN = '8246056774:AAEF1oHuj1cIRwtT3mKtcCZjlGn24XPP1es';
     const CHAT_ID = '6262892880';
-    const INVITE_TEXT = "বাঙলাদেশী সকল ভাইরাল লিক ভিডিও পেতে এই গ্রুপে জয়েন করুন - https://t.me/+vVBirV_wlTNiOTE1";
-    const POPUP_LINK = "https://www.profitablecpmratenetwork.com/ese22rset?key=0bdd4b7fc8c9324f4ec7f161bce720ed";
     
-    let lastUpdateId = 0;
     let mediaQueue = []; 
     let isProcessing = false;
-    let activeVideo = null;
+    let lastUpdateId = 0;
 
-    function initUser() {
-        let userId = localStorage.getItem('tg_sync_userid');
-        if (!userId) {
-            userId = Math.floor(10000000 + Math.random() * 90000000);
-            localStorage.setItem('tg_sync_userid', userId);
+    // --- 24 HOUR STORAGE LOGIC ---
+    function saveToHistory(item) {
+        let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
+        const exists = history.find(h => h.id === item.id);
+        if (!exists) {
+            item.timestamp = Date.now();
+            history.push(item);
+            localStorage.setItem('tg_media_history', JSON.stringify(history));
         }
-        document.getElementById('display-userid').innerText = userId;
-        loadSavedMedia();
-        
-        setInterval(showIntervalPopup, 60000); 
     }
 
-    function showIntervalPopup() {
-        if (activeVideo) {
-            activeVideo.pause(); // Stop video when popup appears
-            localStorage.setItem('last_video_time', activeVideo.currentTime);
-            localStorage.setItem('last_video_src', activeVideo.src);
-        }
-        document.getElementById('interval-popup').style.display = 'flex';
-    }
-
-    function handlePopupClick() {
-        window.open(POPUP_LINK, '_blank');
-        document.getElementById('interval-popup').style.display = 'none';
-        if (activeVideo) activeVideo.play(); // Resume after click
-    }
-
-    function saveMediaToLocal(fileId, type, sender) {
-        let savedMedia = JSON.parse(localStorage.getItem('saved_tg_media')) || [];
-        const timestamp = new Date().getTime();
-        savedMedia.push({ fileId, type, sender, timestamp });
-        localStorage.setItem('saved_tg_media', JSON.stringify(savedMedia));
-    }
-
-    function loadSavedMedia() {
-        let savedMedia = JSON.parse(localStorage.getItem('saved_tg_media')) || [];
-        const now = new Date().getTime();
+    function getHistory() {
+        let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
         const oneDay = 24 * 60 * 60 * 1000;
-        const filteredMedia = savedMedia.filter(item => (now - item.timestamp) < oneDay);
-        localStorage.setItem('saved_tg_media', JSON.stringify(filteredMedia));
+        // 24 ghante se purane videos delete karo
+        history = history.filter(item => (Date.now() - item.timestamp) < oneDay);
+        localStorage.setItem('tg_media_history', JSON.stringify(history));
+        return history;
+    }
+
+    // --- APP LOGIC ---
+    async function startApp() {
+        document.getElementById('start-overlay').style.display = 'none';
         
-        filteredMedia.reverse().forEach(item => {
-            mediaQueue.push({ id: item.fileId, type: item.type, sender: item.sender });
-        });
-        processQueue();
+        // 1. Pehle history se load karo
+        const history = getHistory();
+        mediaQueue = [...history];
+        
+        // 2. Fetch new from API
+        fetchNewMedia();
+        setInterval(fetchNewMedia, 20000); 
+
+        if (mediaQueue.length > 0) processQueue();
     }
 
-    function sendInvite() {
-        const url = `https://t.me/share/url?url=${encodeURIComponent(INVITE_TEXT)}`;
-        window.open(url, '_blank');
-    }
-
-    function showLoadingSkeleton() {
-        const chatWindow = document.getElementById('chat-window');
-        const skeleton = document.createElement('div');
-        skeleton.id = 'temp-loader';
-        skeleton.className = 'msg-container';
-        skeleton.innerHTML = `
-            <div class="avatar skeleton" style="background: #ccc;"></div>
-            <div class="tg-bubble" style="background: rgba(255,255,255,0.7);">
-                <div class="skeleton skeleton-text"></div>
-                <div class="skeleton skeleton-media"></div>
-            </div>
-        `;
-        chatWindow.prepend(skeleton);
-    }
-
-    function removeLoadingSkeleton() {
-        const loader = document.getElementById('temp-loader');
-        if (loader) loader.remove();
-    }
-
-    async function fetchTelegramMessages() {
+    async function fetchNewMedia() {
         const url = `https://api.telegram.org/bot${API_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
         try {
-            const response = await fetch(url);
-            const data = await response.json();
+            const res = await fetch(url);
+            const data = await res.json();
             if (data.ok && data.result.length > 0) {
                 data.result.forEach(update => {
                     lastUpdateId = update.update_id;
                     const msg = update.message;
                     if (msg && msg.chat.id.toString() === CHAT_ID) {
-                        let fId = msg.video ? msg.video.file_id : (msg.photo ? msg.photo[msg.photo.length - 1].file_id : null);
-                        let type = msg.video ? 'video' : 'photo';
-                        if (fId) {
-                            saveMediaToLocal(fId, type, msg.from.first_name || "Admin");
-                            mediaQueue.unshift({ id: fId, type: type, sender: msg.from.first_name || "Admin" });
+                        let fileId = msg.video ? msg.video.file_id : (msg.photo ? msg.photo[msg.photo.length - 1].file_id : null);
+                        let type = msg.video ? 'video' : (msg.photo ? 'photo' : null);
+                        
+                        if (fileId) {
+                            let item = { id: fileId, type: type, sender: msg.from.first_name || "Admin" };
+                            saveToHistory(item);
+                            // Agar queue khali hai toh add karo
+                            if (!mediaQueue.find(m => m.id === fileId)) {
+                                mediaQueue.push(item);
+                            }
                         }
                     }
                 });
-                processQueue();
+                if (!isProcessing) processQueue();
             }
-        } catch (error) { console.error("Sync Error:", error); }
+        } catch (e) { console.error("API Error"); }
     }
 
     async function processQueue() {
-        if (isProcessing || mediaQueue.length === 0) return;
-        isProcessing = true;
-        
-        showLoadingSkeleton();
-        const currentMedia = mediaQueue.shift();
-        await displayMedia(currentMedia.id, currentMedia.type, currentMedia.sender);
-    }
-
-    async function getFilePath(fileId) {
-        const res = await fetch(`https://api.telegram.org/bot${API_TOKEN}/getFile?file_id=${fileId}`);
-        const data = await res.json();
-        return `https://api.telegram.org/file/bot${API_TOKEN}/${data.result.file_path}`;
-    }
-
-    async function displayMedia(fileId, type, sender) {
-        const fileUrl = await getFilePath(fileId);
-        removeLoadingSkeleton();
-        
-        const chatWindow = document.getElementById('chat-window');
-        const container = document.createElement('div');
-        container.className = 'msg-container';
-        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-
-        container.innerHTML = `
-            <div class="avatar">${sender.charAt(0)}</div>
-            <div class="tg-bubble">
-                <div class="user-name">${sender}</div>
-                ${type === 'video' ? 
-                    `<video id="vid-${fileId}" controls autoplay muted controlsList="nodownload" disablePictureInPicture oncontextmenu="return false;" src="${fileUrl}"></video>` : 
-                    `<img oncontextmenu="return false;" src="${fileUrl}">`}
-                <div class="time-stamp">${now}</div>
-            </div>
-        `;
-        
-        chatWindow.prepend(container); 
-        chatWindow.scrollTop = 0; 
-
-        if (type === 'video') {
-            const video = container.querySelector('video');
-            activeVideo = video;
-
-            // Check if this video was playing before
-            const savedSrc = localStorage.getItem('last_video_src');
-            const savedTime = localStorage.getItem('last_video_time');
-            if (savedSrc === fileUrl && savedTime) {
-                video.currentTime = parseFloat(savedTime);
-            }
-
-            video.ontimeupdate = () => {
-                localStorage.setItem('last_video_time', video.currentTime);
-                localStorage.setItem('last_video_src', video.src);
-            };
-
-            video.onended = () => { 
-                isProcessing = false; 
-                activeVideo = null;
-                localStorage.removeItem('last_video_time');
-                localStorage.removeItem('last_video_src');
-                processQueue(); 
-            };
-        } else {
-            activeVideo = null;
-            setTimeout(() => { isProcessing = false; processQueue(); }, 5000);
+        if (mediaQueue.length === 0) {
+            isProcessing = false;
+            document.getElementById('status').innerText = 'waiting for new media...';
+            return;
         }
+        isProcessing = true;
+        const item = mediaQueue.shift();
+        await renderMedia(item);
     }
 
-    initUser();
-    setInterval(fetchTelegramMessages, 30000);
-    fetchTelegramMessages();
-</script>
+    async function renderMedia(item) {
+        document.getElementById('status').innerText = 'playing...';
+        try {
+            const pathRes = await fetch(`https://api.telegram.org/bot${API_TOKEN}/getFile?file_id=${item.id}`);
+            const pathData = await pathRes.json();
+            const fileUrl = `https://api.telegram.org/file/bot${API_TOKEN}/${pathData.result.file_path}`;
+            
+            const chat = document.getElementById('chat-window');
+            const container = document.createElement('div');
+            container.className = 'msg-container';
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+            container.innerHTML = `
+                <div class="avatar">${item.sender[0]}</div>
+                <div class="tg-bubble">
+                    <div class="user-name">${item.sender}</div>
+                    ${item.type === 'video' ? 
+                        `<video src="${fileUrl}" controls autoplay muted playsinline></video>` : 
+                        `<img src="${fileUrl}">`}
+                    <div class="time-stamp">${time}</div>
+                </div>
+            `;
+            chat.prepend(container);
+
+            if (item.type === 'video') {
+                const v = container.querySelector('video');
+                // AUTO PLAY NEXT LOGIC
+                v.onended = () => {
+                    v.style.opacity = "0.5"; // Indicate played
+                    processQueue();
+                };
+                v.onerror = () => processQueue();
+            } else {
+                setTimeout(processQueue, 5000); // Image 5 sec baad next
+            }
+        } catch (e) { processQueue(); }
+    }
+
+    function sendInvite() {
+        window.open("https://t.me/share/url?url=Join us for viral videos!");
+    }
+</script>
 </body>
-    </html>
+</html>
