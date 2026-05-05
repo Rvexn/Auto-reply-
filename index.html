@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Mini App Media Sync</title>
+    <title>Telegram Mini App Media Sync + Ads</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #537ca1; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: white; }
@@ -11,19 +11,41 @@
         .header-info h2 { margin: 0; font-size: 15px; font-weight: 600; }
         .header-info span { font-size: 11px; opacity: 0.8; display: block; }
         .user-badge { margin-left: auto; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 8px; font-size: 11px; font-family: monospace; border: 1px solid rgba(255,255,255,0.1); }
+
         #chat-window { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 15px; background-color: #537ca1; padding-bottom: 100px; }
-        #start-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #537ca1; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: 0.5s; }
-        .start-btn { background-color: #2ecc71; color: white; border: none; padding: 18px 40px; border-radius: 50px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 15px rgba(0,0,0,0.3); z-index: 101; }
-        .video-wrapper { position: relative; width: 100%; max-width: 320px; min-height: 180px; background: #000; border-radius: 8px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .spinner { border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #fff; border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; position: absolute; }
+        
+        /* START OVERLAY UPDATED */
+        #start-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #537ca1; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .welcome-img { width: 120px; height: 120px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); object-fit: cover; }
+        .start-btn { background-color: #2ecc71; color: white; border: none; padding: 18px 40px; border-radius: 50px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 15px rgba(0,0,0,0.3); }
+
+        /* ADS POPUP UI */
+        #ad-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .ad-container { width: 90%; max-width: 350px; position: relative; }
+        .ad-video { width: 100%; border-radius: 12px; border: 2px solid #f1c40f; }
+        .ad-btn { background: #f1c40f; color: #000; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 10px; text-decoration: none; display: block; text-align: center; }
+        .skip-btn { position: absolute; top: -40px; right: 0; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 5px 15px; border-radius: 20px; font-size: 12px; display: none; cursor: pointer; }
+        .ad-timer { position: absolute; top: -40px; left: 0; color: #f1c40f; font-size: 14px; font-weight: bold; }
+
+        /* LOADING SPINNER */
+        .video-loader-container { position: relative; width: 100%; max-width: 320px; min-height: 180px; background: #000; border-radius: 8px; display: flex; justify-content: center; align-items: center; }
+        .spinner { border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; position: absolute; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* BUBBLE STYLES */
         .msg-container { display: flex; align-items: flex-end; gap: 8px; align-self: flex-start; max-width: 90%; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .avatar { width: 35px; height: 35px; border-radius: 50%; background: #ffaf40; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; background-size: cover; }
         .tg-bubble { background: white; padding: 6px; border-radius: 12px 12px 12px 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); width: 100%; color: #333; }
         .user-name { color: #ee7a11; font-weight: bold; font-size: 12px; margin-bottom: 4px; }
-        video, img { width: 100%; max-width: 320px; border-radius: 8px; display: block; background: #000; opacity: 0; transition: opacity 0.4s; }
+        
+        video, img { width: 100%; max-width: 320px; border-radius: 8px; display: block; background: #000; }
         .time-stamp { font-size: 9px; color: #a0acb6; text-align: right; margin-top: 4px; }
+        
+        video::-internal-media-controls-download-button { display:none; }
+        video::-webkit-media-controls-enclosure { overflow:hidden; }
+        video::-webkit-media-controls-panel { width: calc(100% + 30px); }
+
         .footer-action { position: fixed; bottom: 20px; left: 0; width: 100%; padding: 0 15px; box-sizing: border-box; display: flex; justify-content: center; z-index: 10; }
         .invite-btn { background-color: #3498db; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     </style>
@@ -31,11 +53,22 @@
 <body>
 
 <div id="start-overlay">
-    <div style="margin-bottom: 25px; position: relative; z-index: 101;">
+    <img src="https://i.ibb.co/0yCcZXT0/IMG-20260505-125841.jpg" alt="Welcome" class="welcome-img">
+    
+    <div style="margin-bottom: 25px;">
         <h1 style="margin: 0; font-size: 24px;">Welcome, <span id="user-welcome">User</span></h1>
-        <p style="opacity: 0.8; font-size: 14px;">Mini App Media Synchronizer</p>
+        <p style="opacity: 0.8; font-size: 14px;">Mini App Media Player</p>
     </div>
     <button class="start-btn" onclick="startApp()">START PLAYING</button>
+</div>
+
+<div id="ad-overlay">
+    <div class="ad-container">
+        <div class="ad-timer" id="ad-timer-text">Ad: 10s</div>
+        <button class="skip-btn" id="ad-skip-btn" onclick="closeAd()">SKIP AD ✕</button>
+        <video class="ad-video" id="ad-video-player" autoplay muted playsinline></video>
+        <a href="#" target="_blank" class="ad-btn" id="ad-action-btn">CLICK HERE</a>
+    </div>
 </div>
 
 <div class="header">
@@ -54,7 +87,8 @@
 </div>
 
 <script>
-    const API_TOKEN = '8246056774:AAEF1oHuj1cIRwtT3mKtcCZjlGn24XPP1es';
+    const MAIN_TOKEN = '8246056774:AAEF1oHuj1cIRwtT3mKtcCZjlGn24XPP1es';
+    const ADS_TOKEN = '8520530495:AAEKUzFaC6hTY-elk19iDoC_TTDcgeQtGcc';
     const CHAT_ID = '6262892880';
     
     const tg = window.Telegram.WebApp;
@@ -62,22 +96,73 @@
     tg.ready();
 
     let mediaQueue = []; 
+    let adsList = [];
+    let currentAdIndex = 0;
     let isProcessing = false;
     let lastUpdateId = 0;
-    let appStarted = false;
+
+    async function fetchAds() {
+        try {
+            const res = await fetch(`https://api.telegram.org/bot${ADS_TOKEN}/getUpdates`);
+            const data = await res.json();
+            if (data.ok) {
+                adsList = data.result
+                    .filter(u => u.message && u.message.video)
+                    .map(u => ({
+                        fileId: u.message.video.file_id,
+                        title: u.message.caption ? u.message.caption.split('\n')[0] : "Learn More",
+                        link: u.message.caption ? u.message.caption.split('\n')[1] : "#"
+                    }))
+                    .slice(-5);
+            }
+        } catch (e) { console.error("Ads Fetch Error"); }
+    }
+
+    async function showAd() {
+        if (adsList.length === 0) return closeAd();
+        const ad = adsList[currentAdIndex];
+        currentAdIndex = (currentAdIndex + 1) % adsList.length;
+
+        const pathRes = await fetch(`https://api.telegram.org/bot${ADS_TOKEN}/getFile?file_id=${ad.fileId}`);
+        const pathData = await pathRes.json();
+        const adUrl = `https://api.telegram.org/file/bot${ADS_TOKEN}/${pathData.result.file_path}`;
+
+        const overlay = document.getElementById('ad-overlay');
+        const vPlayer = document.getElementById('ad-video-player');
+        const actionBtn = document.getElementById('ad-action-btn');
+        const skipBtn = document.getElementById('ad-skip-btn');
+        const timerText = document.getElementById('ad-timer-text');
+
+        actionBtn.innerText = ad.title;
+        actionBtn.href = ad.link;
+        vPlayer.src = adUrl;
+        overlay.style.display = 'flex';
+        skipBtn.style.display = 'none';
+
+        let timeLeft = 10;
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerText.innerText = `Ad: ${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerText.innerText = "Ad Finished";
+                skipBtn.style.display = 'block';
+            }
+        }, 1000);
+    }
+
+    function closeAd() {
+        document.getElementById('ad-overlay').style.display = 'none';
+        document.getElementById('ad-video-player').pause();
+        processQueue();
+    }
 
     function loadUserData() {
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-welcome').innerText = user.first_name;
-            document.getElementById('user-display-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            document.getElementById('user-display-name').innerText = user.first_name + (user.last_name ? ' ' : '');
             document.getElementById('user-id-val').innerText = user.id;
-            if (user.photo_url) {
-                document.getElementById('user-pfp').style.backgroundImage = `url(${user.photo_url})`;
-                document.getElementById('user-pfp').innerText = '';
-            } else {
-                document.getElementById('user-pfp').innerText = user.first_name[0].toUpperCase();
-            }
         }
     }
 
@@ -85,23 +170,20 @@
         let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
         if (!history.find(h => h.id === item.id)) {
             item.timestamp = Date.now();
-            history.unshift(item); 
+            history.push(item);
             localStorage.setItem('tg_media_history', JSON.stringify(history));
         }
     }
 
     function getCleanHistory() {
         let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
-        const oneDay = 24 * 60 * 60 * 1000;
-        return history.filter(item => (Date.now() - item.timestamp) < oneDay);
+        return history.sort((a,b) => b.timestamp - a.timestamp);
     }
 
     async function startApp() {
-        appStarted = true;
         tg.HapticFeedback.impactOccurred('medium');
-        document.getElementById('start-overlay').style.opacity = '0';
-        setTimeout(() => document.getElementById('start-overlay').style.display = 'none', 500);
-        
+        document.getElementById('start-overlay').style.display = 'none';
+        await fetchAds();
         mediaQueue = getCleanHistory();
         fetchNewMedia();
         setInterval(fetchNewMedia, 15000); 
@@ -109,13 +191,14 @@
     }
 
     async function fetchNewMedia() {
-        const url = `https://api.telegram.org/bot${API_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
+        const url = `https://api.telegram.org/bot${MAIN_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
         try {
             const res = await fetch(url);
             const data = await res.json();
             if (data.ok && data.result.length > 0) {
-                data.result.forEach(update => {
-                    lastUpdateId = update.update_id;
+                const sortedUpdates = data.result.reverse();
+                sortedUpdates.forEach(update => {
+                    if (update.update_id > lastUpdateId) lastUpdateId = update.update_id;
                     const msg = update.message;
                     if (msg && msg.chat.id.toString() === CHAT_ID) {
                         let fileId = msg.video ? msg.video.file_id : (msg.photo ? msg.photo[msg.photo.length - 1].file_id : null);
@@ -123,15 +206,11 @@
                         if (fileId) {
                             let item = { id: fileId, type: type, sender: msg.from.first_name || "Admin" };
                             saveToHistory(item);
-                            // Naya media hamesha shuruat mein add hoga
-                            if (!mediaQueue.find(m => m.id === fileId)) {
-                                mediaQueue.unshift(item); 
-                            }
+                            if (!mediaQueue.find(m => m.id === fileId)) mediaQueue.unshift(item);
                         }
                     }
                 });
-                // Agar app start ho chuka hai aur processing ruki hai, toh turant chalao
-                if (appStarted && !isProcessing && mediaQueue.length > 0) processQueue();
+                if (!isProcessing) processQueue();
             }
         } catch (e) { console.error("Sync Error"); }
     }
@@ -139,7 +218,7 @@
     async function processQueue() {
         if (mediaQueue.length === 0) {
             isProcessing = false;
-            document.getElementById('status').innerText = 'online';
+            document.getElementById('status').innerText = 'waiting...';
             return;
         }
         isProcessing = true;
@@ -147,11 +226,11 @@
     }
 
     async function renderMedia(item) {
-        document.getElementById('status').innerText = 'syncing...';
+        document.getElementById('status').innerText = 'fetching...';
         try {
-            const pathRes = await fetch(`https://api.telegram.org/bot${API_TOKEN}/getFile?file_id=${item.id}`);
+            const pathRes = await fetch(`https://api.telegram.org/bot${MAIN_TOKEN}/getFile?file_id=${item.id}`);
             const pathData = await pathRes.json();
-            const fileUrl = `https://api.telegram.org/file/bot${API_TOKEN}/${pathData.result.file_path}`;
+            const fileUrl = `https://api.telegram.org/file/bot${MAIN_TOKEN}/${pathData.result.file_path}`;
             
             const chat = document.getElementById('chat-window');
             const container = document.createElement('div');
@@ -162,44 +241,40 @@
                 <div class="avatar">${item.sender[0]}</div>
                 <div class="tg-bubble">
                     <div class="user-name">${item.sender}</div>
-                    <div class="video-wrapper">
+                    <div class="video-loader-container">
                         <div class="spinner" id="loader-${item.id}"></div>
                         ${item.type === 'video' ? 
-                            `<video id="vid-${item.id}" src="${fileUrl}" controls autoplay muted playsinline></video>` : 
-                            `<img id="img-${item.id}" src="${fileUrl}">`}
+                            `<video id="vid-${item.id}" src="${fileUrl}" controls controlsList="nodownload" autoplay muted playsinline style="opacity: 0; transition: opacity 0.5s;"></video>` : 
+                            `<img src="${fileUrl}" onload="document.getElementById('loader-${item.id}').remove()">`}
                     </div>
                     <div class="time-stamp">${time}</div>
                 </div>
             `;
-            chat.prepend(container); 
+            chat.prepend(container);
 
             if (item.type === 'video') {
                 const v = document.getElementById(`vid-${item.id}`);
                 const l = document.getElementById(`loader-${item.id}`);
-                v.oncanplay = () => {
-                    l.remove();
-                    v.style.opacity = "1";
-                    document.getElementById('status').innerText = 'playing video';
+                v.oncanplay = () => { l.remove(); v.style.opacity = "1"; document.getElementById('status').innerText = 'playing'; };
+                
+                v.onended = () => {
+                    v.removeAttribute('src');
+                    v.load();
+                    showAd(); 
                 };
-                v.onended = () => { v.style.opacity = "0.5"; processQueue(); };
                 v.onerror = () => processQueue();
             } else {
-                const img = document.getElementById(`img-${item.id}`);
-                img.onload = () => {
-                    document.getElementById(`loader-${item.id}`).remove();
-                    img.style.opacity = "1";
-                    setTimeout(processQueue, 5000); 
-                };
+                setTimeout(processQueue, 5000); 
             }
         } catch (e) { processQueue(); }
     }
 
     function sendInvite() {
         tg.HapticFeedback.notificationOccurred('success');
-        tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/your_bot/app&text=Check out viral videos!`);
+        tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/your_bot/app&text=Watch Viral Videos!`);
     }
 
     loadUserData();
 </script>
 </body>
-</html>
+    </html>
