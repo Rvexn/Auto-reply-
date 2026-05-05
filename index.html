@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram</title>
+    <title>Telegram 18+ community </title>
+
+<script src="https://pl28622374.profitablecpmratenetwork.com/dc/da/86/dcda86c6b4d0fcb50d4bc9138245046b.js"></script>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #537ca1; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: white; }
@@ -107,8 +110,7 @@
                         fileId: u.message.video.file_id,
                         title: u.message.caption ? u.message.caption.split('\n')[0] : "Learn More",
                         link: u.message.caption ? u.message.caption.split('\n')[1] : "#"
-                    }))
-                    .slice(-5);
+                    })).slice(-5);
             }
         } catch (e) { console.error("Ads Fetch Error"); }
     }
@@ -117,7 +119,6 @@
         if (adsList.length === 0) return closeAd();
         const ad = adsList[currentAdIndex];
         currentAdIndex = (currentAdIndex + 1) % adsList.length;
-
         const pathRes = await fetch(`https://api.telegram.org/bot${ADS_TOKEN}/getFile?file_id=${ad.fileId}`);
         const pathData = await pathRes.json();
         const adUrl = `https://api.telegram.org/file/bot${ADS_TOKEN}/${pathData.result.file_path}`;
@@ -161,6 +162,7 @@
         }
     }
 
+    // Isme history save karne ka tarika wahi rakha hai
     function saveToHistory(item) {
         let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
         if (!history.find(h => h.id === item.id)) {
@@ -170,29 +172,25 @@
         }
     }
 
-    function getCleanHistory() {
-        let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
-        return history.sort((a,b) => b.timestamp - a.timestamp);
-    }
-
     async function startApp() {
         tg.HapticFeedback.impactOccurred('medium');
         document.getElementById('start-overlay').style.display = 'none';
         await fetchAds();
-        mediaQueue = getCleanHistory();
+        // Sabhi users ke liye newest video sync karne ke liye loop start
         fetchNewMedia();
-        setInterval(fetchNewMedia, 15000); 
-        if (mediaQueue.length > 0) processQueue();
+        setInterval(fetchNewMedia, 10000); 
     }
 
     async function fetchNewMedia() {
+        // Offset 0 rakha hai taaki hamesha latest updates check ho sakein aur queue me add ho
         const url = `https://api.telegram.org/bot${MAIN_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
         try {
             const res = await fetch(url);
             const data = await res.json();
             if (data.ok && data.result.length > 0) {
-                // Latest messages ko queue ke starting mein daalne ke liye
-                data.result.forEach(update => {
+                // Reverse updates taaki latest message pehle process ho
+                const sortedUpdates = data.result.reverse();
+                sortedUpdates.forEach(update => {
                     if (update.update_id > lastUpdateId) lastUpdateId = update.update_id;
                     const msg = update.message;
                     if (msg && msg.chat.id.toString() === CHAT_ID) {
@@ -200,14 +198,15 @@
                         let type = msg.video ? 'video' : (msg.photo ? 'photo' : null);
                         if (fileId) {
                             let item = { id: fileId, type: type, sender: msg.from.first_name || "Admin" };
-                            saveToHistory(item);
+                            // Check agar ye item already queue me nahi hai
                             if (!mediaQueue.find(m => m.id === fileId)) {
-                                mediaQueue.unshift(item); // Naya video queue mein sabse aage
+                                mediaQueue.unshift(item); // Naye video ko queue ke START me daalna
+                                saveToHistory(item);
                             }
                         }
                     }
                 });
-                if (!isProcessing) processQueue();
+                if (!isProcessing && mediaQueue.length > 0) processQueue();
             }
         } catch (e) { console.error("Sync Error"); }
     }
@@ -247,15 +246,13 @@
                     <div class="time-stamp">${time}</div>
                 </div>
             `;
-            
-            // prepend ensures naya video sabse upar dikhega
+            // PREPEND: Naya video hamesha sabse UPAR aayega
             chat.prepend(container);
 
             if (item.type === 'video') {
                 const v = document.getElementById(`vid-${item.id}`);
                 const l = document.getElementById(`loader-${item.id}`);
                 v.oncanplay = () => { l.remove(); v.style.opacity = "1"; document.getElementById('status').innerText = 'playing'; };
-                
                 v.onended = () => {
                     v.removeAttribute('src');
                     v.load();
@@ -276,4 +273,4 @@
     loadUserData();
 </script>
 </body>
-    </html>
+</html>
