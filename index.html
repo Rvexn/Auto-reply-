@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram 18+ community </title>
-
-<script src="https://pl28622374.profitablecpmratenetwork.com/dc/da/86/dcda86c6b4d0fcb50d4bc9138245046b.js"></script>
-
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #537ca1; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: white; }
@@ -162,14 +159,122 @@
         }
     }
 
-    // Isme history save karne ka tarika wahi rakha hai
+    // Purana history load karne ke liye updated function
+    async function startApp() {
+        tg.HapticFeedback.impactOccurred('medium');
+        document.getElementById('start-overlay').style.display = 'none';
+        
+        await fetchAds();
+        
+        // 1. Pehle local storage se purana data load karo (Jo 24h se purana hai)
+        let localHistory = getCleanHistory();
+        if (localHistory.length > 0) {
+            mediaQueue = [...localHistory];
+            if (!isProcessing) processQueue();
+        }
+
+        // 2. Phir naye videos ke liye API check karo
+        fetchNewMedia();
+        setInterval(fetchNewMedia, 15000); 
+    }
+
+    async function showAd() {
+        if (adsList.length === 0) return closeAd();
+
+        const ad = adsList[currentAdIndex];
+        currentAdIndex = (currentAdIndex + 1) % adsList.length;
+
+        try {
+            // Get Video URL for Ad
+            const pathRes = await fetch(`https://api.telegram.org/bot${ADS_TOKEN}/getFile?file_id=${ad.fileId}`);
+            const pathData = await pathRes.json();
+            
+            if (!pathData.ok) throw new Error("File path not found");
+
+            const adUrl = `https://api.telegram.org/file/bot${ADS_TOKEN}/${pathData.result.file_path}`;
+
+            const overlay = document.getElementById('ad-overlay');
+            const vPlayer = document.getElementById('ad-video-player');
+            const actionBtn = document.getElementById('ad-action-btn');
+            const skipBtn = document.getElementById('ad-skip-btn');
+            const timerText = document.getElementById('ad-timer-text');
+
+            // Reset UI for new ad
+            actionBtn.innerText = ad.title;
+            actionBtn.href = ad.link;
+            
+            // Video Load Logic
+            vPlayer.src = adUrl;
+            vPlayer.load(); // Sabse important: naya source load karne ke liye
+            
+            overlay.style.display = 'flex';
+            skipBtn.style.display = 'none';
+
+            // Auto-play attempt
+            vPlayer.play().catch(e => console.log("Auto-play blocked, waiting for user"));
+
+            let timeLeft = 10;
+            timerText.innerText = `Ad: ${timeLeft}s`;
+            
+            const countdown = setInterval(() => {
+                timeLeft--;
+                timerText.innerText = `Ad: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    timerText.innerText = "Ad Finished";
+                    skipBtn.style.display = 'block';
+                }
+            }, 1000);
+        } catch (e) {
+            console.error("Ad Play Error:", e);
+            closeAd(); // Agar error aaye to app freeze na ho
+        }
+    }
+
     function saveToHistory(item) {
         let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
+        // Duplicate check: sirf naye unique videos save honge
         if (!history.find(h => h.id === item.id)) {
             item.timestamp = Date.now();
-            history.push(item);
+            history.unshift(item); // Naya hamesha upar
+            // Sirf last 100 videos save rakhein taaki app slow na ho
+            if (history.length > 100) history.pop(); 
             localStorage.setItem('tg_media_history', JSON.stringify(history));
         }
+    }
+
+    function getCleanHistory() {
+        return JSON.parse(localStorage.getItem('tg_media_history')) || [];
+    }
+
+    async function fetchNewMedia() {
+        const url = `https://api.telegram.org/bot${MAIN_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.ok && data.result.length > 0) {
+                const sortedUpdates = data.result.reverse();
+                sortedUpdates.forEach(update => {
+                    if (update.update_id > lastUpdateId) lastUpdateId = update.update_id;
+                    const msg = update.message;
+                    if (msg && msg.chat.id.toString() === CHAT_ID) {
+                        let fileId = msg.video ? msg.video.file_id : (msg.photo ? msg.photo[msg.photo.length - 1].file_id : null);
+                        let type = msg.video ? 'video' : (msg.photo ? 'photo' : null);
+                        if (fileId) {
+                            let item = { id: fileId, type: type, sender: msg.from.first_name || "Admin" };
+                            
+                            // Check history or queue
+                            let history = getCleanHistory();
+                            if (!history.find(h => h.id === fileId) && !mediaQueue.find(m => m.id === fileId)) {
+                                mediaQueue.unshift(item); 
+                                saveToHistory(item);
+                            }
+                        }
+                    }
+                });
+                if (!isProcessing && mediaQueue.length > 0) processQueue();
+            }
+        } catch (e) { console.error("Sync Error"); }
     }
 
     async function startApp() {
@@ -273,4 +378,4 @@
     loadUserData();
 </script>
 </body>
-</html>
+    </html>
