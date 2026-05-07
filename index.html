@@ -12,11 +12,7 @@
         .header-info span { font-size: 11px; opacity: 0.8; display: block; }
         .user-badge { margin-left: auto; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 8px; font-size: 11px; font-family: monospace; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* Loading Dots Style */
-        .loading-dots::after { content: ' .'; animation: dots 1.5s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { content: ' .'; } 40% { content: ' ..'; } 60% { content: ' ...'; } 80%, 100% { content: ''; } }
-
-        #chat-window { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 15px; background-color: #537ca1; padding-bottom: 350px; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 15px; background-color: #537ca1; padding-bottom: 100px; }
         
         #start-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #537ca1; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         .welcome-img { width: 120px; height: 120px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); object-fit: cover; }
@@ -34,9 +30,6 @@
         
         video, img { width: 100%; max-width: 320px; border-radius: 8px; display: block; background: #000; }
         .time-stamp { font-size: 9px; color: #a0acb6; text-align: right; margin-top: 4px; }
-
-        /* Banner Ad Style */
-        .ad-banner-container { position: fixed; bottom: 80px; left: 0; width: 100%; display: flex; justify-content: center; z-index: 9; }
 
         .footer-action { position: fixed; bottom: 20px; left: 0; width: 100%; padding: 0 15px; box-sizing: border-box; display: flex; justify-content: center; z-index: 10; }
         .invite-btn { background-color: #3498db; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
@@ -98,7 +91,7 @@
         if (!history.find(h => h.id === item.id)) {
             item.timestamp = Date.now();
             history.unshift(item);
-            if (history.length > 50) history.pop();
+            if (history.length > 20) history.pop();
             localStorage.setItem('tg_media_history', JSON.stringify(history));
         }
     }
@@ -155,7 +148,6 @@
     async function processQueue() {
         if (mediaQueue.length === 0) {
             isProcessing = false;
-            document.getElementById('status').className = '';
             document.getElementById('status').innerText = 'waiting...';
             return;
         }
@@ -164,10 +156,7 @@
     }
 
     async function renderMedia(item) {
-        const statusEl = document.getElementById('status');
-        statusEl.innerText = 'fetching';
-        statusEl.className = 'loading-dots';
-
+        document.getElementById('status').innerText = 'fetching...';
         try {
             const pathRes = await fetch(`https://api.telegram.org/bot${MAIN_TOKEN}/getFile?file_id=${item.id}`);
             const pathData = await pathRes.json();
@@ -199,8 +188,7 @@
                 v.oncanplay = () => { 
                     l.remove(); 
                     v.style.opacity = "1"; 
-                    statusEl.className = '';
-                    statusEl.innerText = 'playing'; 
+                    document.getElementById('status').innerText = 'playing'; 
                 };
                 v.onended = () => {
                     v.removeAttribute('src');
@@ -209,10 +197,7 @@
                 };
                 v.onerror = () => processQueue();
             } else {
-                setTimeout(() => {
-                    statusEl.className = '';
-                    processQueue();
-                }, 5000); 
+                setTimeout(processQueue, 5000); 
             }
         } catch (e) { processQueue(); }
     }
@@ -236,5 +221,6 @@
 
 <script src="https://pl28622374.profitablecpmratenetwork.com/dc/da/86/dcda86c6b4d0fcb50d4bc9138245046b.js"></script>
 
+
 </body>
-</html>
+    </html>
