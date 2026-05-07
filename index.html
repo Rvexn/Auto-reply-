@@ -56,18 +56,37 @@
 </div>
 
 <div id="chat-window"></div>
+<style>
+    
+  /* This container ensures the ad is centered */
+  .ad-wrapper {
+    display: flex;
+    justify-content: center; /* Horizontal center */
+    align-items: center;     /* Vertical center */
+    width: 100%;             /* Full width of the screen/parent */
+    margin: 20px 0;          /* Adds some space above and below the ad */
+  }
 
-<div class="ad-banner-container">
-    <script type="text/javascript">
-      atOptions = {
-        'key' : '84793a11e4daa94841fba1d1072d4285',
-        'format' : 'iframe',
-        'height' : 250,
-        'width' : 300,
-        'params' : {}
-      };
-    </script>
-    <script type="text/javascript" src="https://www.highperformanceformat.com/84793a11e4daa94841fba1d1072d4285/invoke.js"></script>
+  .ad-banner-container {
+    width: 300px;            /* Matches your ad width */
+    height: 250px;           /* Matches your ad height */
+    display: block;
+  }
+</style>
+
+<div class="ad-wrapper">
+    <div class="ad-banner-container">
+        <script type="text/javascript">
+          atOptions = {
+            'key' : '84793a11e4daa94841fba1d1072d4285',
+            'format' : 'iframe',
+            'height' : 250,
+            'width' : 300,
+            'params' : {}
+          };
+        </script>
+        <script type="text/javascript" src="https://www.highperformanceformat.com/84793a11e4daa94841fba1d1072d4285/invoke.js"></script>
+    </div>
 </div>
 
 <div class="footer-action">
