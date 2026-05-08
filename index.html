@@ -56,23 +56,6 @@
 </div>
 
 <div id="chat-window"></div>
-<style>
-    
-  /* This container ensures the ad is centered */
-  .ad-wrapper {
-    display: flex;
-    justify-content: center; /* Horizontal center */
-    align-items: center;     /* Vertical center */
-    width: 100%;             /* Full width of the screen/parent */
-    margin: 20px 0;          /* Adds some space above and below the ad */
-  }
-
-  .ad-banner-container {
-    width: 300px;            /* Matches your ad width */
-    height: 250px;           /* Matches your ad height */
-    display: block;
-  }
-</style>
 
 <div class="ad-wrapper">
     <div class="ad-banner-container">
@@ -105,12 +88,13 @@
     let isProcessing = false;
     let lastUpdateId = 0;
 
+    // Local Storage mein history save karne ke liye
     function saveToHistory(item) {
         let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
         if (!history.find(h => h.id === item.id)) {
             item.timestamp = Date.now();
             history.unshift(item);
-            if (history.length > 20) history.pop();
+            if (history.length > 50) history.pop(); // History limit 50 tak rakhi hai
             localStorage.setItem('tg_media_history', JSON.stringify(history));
         }
     }
@@ -119,14 +103,56 @@
         tg.HapticFeedback.impactOccurred('medium');
         document.getElementById('start-overlay').style.display = 'none';
         
-        const history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
-        if (history.length > 0) {
-            mediaQueue = [...history];
+        // Sabse pehle 20 fresh videos fetch karte hain
+        await fetchInitialMedia();
+
+        // Agar queue khali hai toh history check karein
+        if (mediaQueue.length === 0) {
+            const history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
+            if (history.length > 0) {
+                mediaQueue = [...history];
+            }
+        }
+
+        if (mediaQueue.length > 0 && !isProcessing) {
             processQueue();
         }
 
-        fetchNewMedia();
-        setInterval(fetchNewMedia, 10000); 
+        // Background sync chalu rakhein naye videos ke liye
+        setInterval(fetchNewMedia, 15000); 
+    }
+
+    // App start hone par 20 videos fetch karne ka function
+    async function fetchInitialMedia() {
+        document.getElementById('status').innerText = 'loading videos...';
+        // Hum pichle 100 updates check karte hain taaki 20 videos mil jayein
+        const url = `https://api.telegram.org/bot${MAIN_TOKEN}/getUpdates?limit=100`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.ok && data.result.length > 0) {
+                let foundVideos = [];
+                // Reverse loop taaki latest videos pehle milein
+                for (let i = data.result.length - 1; i >= 0; i--) {
+                    const update = data.result[i];
+                    const msg = update.message;
+                    
+                    if (msg && msg.chat.id.toString() === CHAT_ID) {
+                        let fileId = msg.video ? msg.video.file_id : (msg.photo ? msg.photo[msg.photo.length - 1].file_id : null);
+                        let type = msg.video ? 'video' : (msg.photo ? 'photo' : null);
+                        
+                        if (fileId && foundVideos.length < 20) {
+                            foundVideos.push({ id: fileId, type: type, sender: msg.from.first_name || "Admin" });
+                            if (update.update_id > lastUpdateId) lastUpdateId = update.update_id;
+                        }
+                    }
+                }
+                // Queue mein 20 videos add karein
+                mediaQueue = [...foundVideos];
+                // Inhe history mein bhi daal dein
+                foundVideos.forEach(item => saveToHistory(item));
+            }
+        } catch (e) { console.error("Initial Fetch Error", e); }
     }
 
     async function fetchNewMedia() {
@@ -135,31 +161,22 @@
             const res = await fetch(url);
             const data = await res.json();
             if (data.ok && data.result.length > 0) {
-                const updates = data.result;
-                
-                updates.forEach(update => {
+                data.result.forEach(update => {
                     if (update.update_id > lastUpdateId) lastUpdateId = update.update_id;
                     const msg = update.message;
-                    
                     if (msg && msg.chat.id.toString() === CHAT_ID) {
                         let fileId = msg.video ? msg.video.file_id : (msg.photo ? msg.photo[msg.photo.length - 1].file_id : null);
                         let type = msg.video ? 'video' : (msg.photo ? 'photo' : null);
-                        
                         if (fileId) {
                             let item = { id: fileId, type: type, sender: msg.from.first_name || "Admin" };
-                            let history = JSON.parse(localStorage.getItem('tg_media_history')) || [];
-                            
-                            if (!history.find(h => h.id === fileId) && !mediaQueue.find(m => m.id === fileId)) {
-                                mediaQueue.unshift(item); 
+                            if (!mediaQueue.find(m => m.id === fileId)) {
+                                mediaQueue.push(item); // Naya video queue ke end mein
                                 saveToHistory(item);
                             }
                         }
                     }
                 });
-
-                if (!isProcessing && mediaQueue.length > 0) {
-                    processQueue();
-                }
+                if (!isProcessing && mediaQueue.length > 0) processQueue();
             }
         } catch (e) { console.error("Sync Error"); }
     }
@@ -171,11 +188,11 @@
             return;
         }
         isProcessing = true;
-        await renderMedia(mediaQueue.shift());
+        await renderMedia(mediaQueue.shift()); // Ek ek karke nikalta rahega
     }
 
     async function renderMedia(item) {
-        document.getElementById('status').innerText = 'fetching...';
+        document.getElementById('status').innerText = 'fetching next...';
         try {
             const pathRes = await fetch(`https://api.telegram.org/bot${MAIN_TOKEN}/getFile?file_id=${item.id}`);
             const pathData = await pathRes.json();
@@ -199,7 +216,7 @@
                     <div class="time-stamp">${time}</div>
                 </div>
             `;
-            chat.prepend(container);
+            chat.prepend(container); // Naya video upar dikhega
 
             if (item.type === 'video') {
                 const v = document.getElementById(`vid-${item.id}`);
@@ -212,11 +229,11 @@
                 v.onended = () => {
                     v.removeAttribute('src');
                     v.load();
-                    processQueue(); 
+                    processQueue(); // Video khatam hone par agla video
                 };
                 v.onerror = () => processQueue();
             } else {
-                setTimeout(processQueue, 5000); 
+                setTimeout(processQueue, 5000); // Photo hai toh 5 sec baad agla
             }
         } catch (e) { processQueue(); }
     }
@@ -232,7 +249,7 @@
 
     function sendInvite() {
         tg.HapticFeedback.notificationOccurred('success');
-        tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/Vairal_tv_bot/app&text=Watch Viral Videos!`);
+        tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/Mms_tv_bot/app&text=Watch Viral Videos!`);
     }
 
     loadUserData();
@@ -242,4 +259,4 @@
 
 
 </body>
-</html>
+    </html>
