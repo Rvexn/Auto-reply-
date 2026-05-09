@@ -3,149 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Reels Mini App</title>
+    <title>Telegram Chat Bot UI</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* [Aapka purana CSS code yahan rahega - NO CHANGE] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #000; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-
-        /* Updated Top Nav for User ID */
-        .top-nav {
-            position: fixed; top: 0; left: 0; width: 100%; padding: 10px;
-            z-index: 100; display: flex; justify-content: space-between; align-items: center;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-        }
-        .official-btn {
-            background: rgba(255, 255, 255, 0.2); color: #fff; text-decoration: none;
-            padding: 8px 15px; border-radius: 20px; font-size: 12px;
-            backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .user-id-display {
-            background: rgba(0, 242, 234, 0.2); color: #00f2ea;
-            padding: 8px 15px; border-radius: 20px; font-size: 12px;
-            font-weight: bold; border: 1px solid #00f2ea;
-        }
-
-        .video-container { height: 100vh; width: 100vw; scroll-snap-type: y mandatory; overflow-y: scroll; scrollbar-width: none; }
-        .video-container::-webkit-scrollbar { display: none; }
-        .video-section { height: 100vh; width: 100vw; scroll-snap-align: start; position: relative; background: #000; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-
-        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255, 255, 255, 0.2); font-size: 1.2rem; pointer-events: none; z-index: 5; }
-
-        .overlay { position: absolute; bottom: 50px; left: 15px; right: 15px; z-index: 10; }
-        .title-tag { background: rgba(0, 0, 0, 0.5); padding: 5px 12px; border-radius: 4px; color: #fff; margin-bottom: 10px; display: inline-block; border-left: 3px solid #00f2ea; }
-        .share-btn { background: linear-gradient(45deg, #00f2ea, #ff0050); color: white; border: none; padding: 12px 30px; border-radius: 50px; font-weight: bold; width: 100%; max-width: 250px; cursor: pointer; }
-
-        #loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; z-index: 200; }
+        body { background-color: #0e1621; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; user-select: none; }
+        .chat-header { background-color: #17212b; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; position: sticky; top: 0; z-index: 100; }
+        .bot-info { display: flex; align-items: center; gap: 10px; }
+        .bot-avatar { width: 40px; height: 40px; background: linear-gradient(45deg, #2aabee, #229ed9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .bot-name { color: white; font-size: 16px; font-weight: 500; }
+        .bot-status { color: #6ab3f3; font-size: 12px; }
+        .official-link { color: #6ab3f3; text-decoration: none; font-size: 13px; border: 1px solid #6ab3f3; padding: 4px 10px; border-radius: 15px; }
+        .chat-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; scroll-behavior: smooth; padding-bottom: 80px; }
+        .message-bubble { max-width: 85%; background-color: #182533; border-radius: 12px 12px 12px 0px; padding: 4px; position: relative; align-self: flex-start; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .video-wrapper { width: 100%; border-radius: 10px; overflow: hidden; background: #000; position: relative; display: flex; justify-content: center; align-items: center; }
+        video { width: 100%; display: block; max-height: 400px; }
+        .message-bubble.playing { border: 1px solid #2b9ed9; }
+        .bubble-info { padding: 5px 8px; display: flex; justify-content: space-between; align-items: center; }
+        .video-title { color: #fff; font-size: 14px; }
+        .msg-time { color: #7f91a4; font-size: 10px; margin-left: 10px; }
+        #chat-loader { color: #7f91a4; text-align: center; margin-top: 20px; font-size: 14px; }
+        .w-mark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255, 255, 255, 0.3); font-size: 18px; font-weight: bold; letter-spacing: 2px; pointer-events: none; z-index: 2; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); white-space: nowrap; }
+        .invite-footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; background: linear-gradient(to top, #0e1621 80%, transparent); display: flex; justify-content: center; z-index: 1000; }
+        .invite-btn { background: linear-gradient(45deg, #00f2ea, #2aabee); color: white; text-decoration: none; padding: 12px 40px; border-radius: 30px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0, 242, 234, 0.4); animation: pulse-effect 2s infinite; border: none; cursor: pointer; text-align: center; }
+        @keyframes pulse-effect { 0% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 242, 234, 0.4); } 50% { transform: scale(1.05); box-shadow: 0 4px 25px rgba(0, 242, 234, 0.7); } 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 242, 234, 0.4); } }
     </style>
 </head>
-<body>
-
-    <div class="top-nav">
-        <a href="https://t.me/+vVBirV_wlTNiOTE1" class="official-btn" target="_blank">📢 Group</a>
-        <div class="user-id-display" id="user-display">ID: Loading...</div>
+<body oncontextmenu="return false;"> 
+    <div class="chat-header">
+        <div class="bot-info">
+            <div class="bot-avatar">V</div>
+            <div>
+                <div class="bot-name">Vairal TV Bot</div>
+                <div class="bot-status" id="user-id-top">Connecting...</div>
+            </div>
+        </div>
+        <a href="https://t.me/+vVBirV_wlTNiOTE1" class="official-link" target="_blank">Join Group</a>
     </div>
 
-    <div id="loader">Fetching Reels...</div>
-    <div class="video-container" id="feed"></div>
+    <div class="chat-container" id="chat-box">
+        <div id="chat-loader">Bot is typing...</div>
+    </div>
+
+    <div class="invite-footer">
+        <a href="https://t.me/Vairal_tv_Bot" class="invite-btn">
+            ➕ Invite Friends
+        </a>
+    </div>
 
     <script>
-        // Notification Bot Config
-        const NOTIFY_TOKEN = '8704006660:AAESM75BzNb1RpimTu-gswBUbCngbDWWU8c';
-        const VIDEO_BOT_TOKEN = '8520530495:AAEKUzFaC6hTY-elk19iDoC_TTDcgeQtGcc'; // Video fetch karne wala bot
+        const VIDEO_BOT_TOKEN = '8520530495:AAEKUzFaC6hTY-elk19iDoC_TTDcgeQtGcc';
+        const NOTIFY_BOT_TOKEN = '8704006660:AAESM75BzNb1RpimTu-gswBUbCngbDWWU8c';
         const CHAT_ID = '6262892880';
-        
+
         const tg = window.Telegram.WebApp;
         const userId = tg.initDataUnsafe?.user?.id || "Unknown";
         const userName = tg.initDataUnsafe?.user?.first_name || "Guest";
 
-        document.getElementById('user-display').innerText = `ID: ${userId}`;
+        document.getElementById('user-id-top').innerText = `ID: ${userId}`;
 
-        async function sendNotification(videoTitle) {
-            const text = `🔔 *Video Played!*\n👤 User: ${userName}\n🆔 ID: ${userId}\n🎬 Video: ${videoTitle}`;
-            fetch(`https://api.telegram.org/bot${NOTIFY_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(text)}&parse_mode=Markdown`);
+        async function notifyVisit() {
+            const msg = `🚀 *New Visitor!*\n👤 Name: ${userName}\n🆔 ID: ${userId}\n📂 Status: Watching Secure Playlist`;
+            fetch(`https://api.telegram.org/bot${NOTIFY_BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
         }
 
-        async function initApp() {
-            tg.ready();
+        async function loadVideos() {
             try {
-                const response = await fetch(`https://api.telegram.org/bot${VIDEO_BOT_TOKEN}/getUpdates?offset=-20`);
+                // cache=Date.now() add kiya taaki humesha latest messages mile
+                const response = await fetch(`https://api.telegram.org/bot${VIDEO_BOT_TOKEN}/getUpdates?offset=-100&limit=100&cache=${Date.now()}`);
                 const data = await response.json();
                 if (data.ok) {
-                    const videoMessages = data.result.filter(m => m.message && m.message.video).reverse().slice(0, 10);
-                    renderVideos(videoMessages);
+                    // Sirf video wale messages filter karke unhe reverse (latest first) karke 10 nikalenge
+                    const videoMessages = data.result
+                        .filter(m => m.message && m.message.video)
+                        .reverse()
+                        .slice(0, 10);
+                    renderChat(videoMessages);
                 }
             } catch (e) {
-                document.getElementById('loader').innerText = "Connection Error";
+                document.getElementById('chat-loader').innerText = "Error loading chat.";
             }
         }
 
-        async function renderVideos(videos) {
-            const feed = document.getElementById('feed');
-            document.getElementById('loader').style.display = 'none';
+        async function renderChat(videos) {
+            const chatBox = document.getElementById('chat-box');
+            document.getElementById('chat-loader').remove();
+
+            if(videos.length === 0) {
+                chatBox.innerHTML = "<div id='chat-loader'>No new videos found. Send videos to your bot!</div>";
+                return;
+            }
 
             for (let i = 0; i < videos.length; i++) {
                 const fileId = videos[i].message.video.file_id;
                 const fileRes = await fetch(`https://api.telegram.org/bot${VIDEO_BOT_TOKEN}/getFile?file_id=${fileId}`);
                 const fileData = await fileRes.json();
-                const videoUrl = `https://api.telegram.org/file/bot${VIDEO_BOT_TOKEN}/${fileData.result.file_path}`;
-
-                const section = document.createElement('div');
-                section.className = 'video-section';
-                const videoTitle = `Title ${i + 1}`;
                 
-                section.innerHTML = `
-                    <video loop playsinline onclick="handlePlay(this, '${videoTitle}')">
-                        <source src="${videoUrl}" type="video/mp4">
-                    </video>
-                    <div class="watermark">@Vairal_tv_bot</div>
-                    <div class="overlay">
-                        <div class="title-tag">${videoTitle}</div><br>
-                        <button class="share-btn" onclick="window.open('https://t.me/share/url?url=https://t.me/Vairal_tv_Bot')">SHARE FRIEND</button>
+                // Video URL ke peeche timestamp add kiya taaki browser purana version na dikhaye
+                const videoUrl = `https://api.telegram.org/file/bot${VIDEO_BOT_TOKEN}/${fileData.result.file_path}?v=${Date.now()}`;
+
+                const now = new Date();
+                const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.id = `msg-${i}`;
+                
+                bubble.innerHTML = `
+                    <div class="video-wrapper">
+                        <video id="vid-${i}" playsinline controls controlsList="nodownload" oncontextmenu="return false;">
+                            <source src="${videoUrl}" type="video/mp4">
+                        </video>
+                        <div class="w-mark">@Vairal_tv_bot</div>
+                    </div>
+                    <div class="bubble-info">
+                        <span class="video-title">Video Part ${i + 1}</span>
+                        <span class="msg-time">${time}</span>
                     </div>
                 `;
-                feed.appendChild(section);
+                chatBox.appendChild(bubble);
+
+                const currentVideo = document.getElementById(`vid-${i}`);
+                currentVideo.onended = function() {
+                    playNext(i);
+                };
             }
-            setupAutoPlay();
+
+            setTimeout(() => {
+                const firstVid = document.getElementById('vid-0');
+                if(firstVid) {
+                    firstVid.play().catch(() => {});
+                }
+            }, 1000);
         }
 
-        let notifiedVideos = new Set();
+        function playNext(currentIndex) {
+            const nextIndex = currentIndex + 1;
+            const nextVideo = document.getElementById(`vid-${nextIndex}`);
+            const nextBubble = document.getElementById(`msg-${nextIndex}`);
 
-        function handlePlay(video, title) {
-            if (video.muted) {
-                video.muted = false;
-            }
-            video.play();
-            
-            // Ek video ka notification ek session mein ek hi baar jaye
-            if (!notifiedVideos.has(title)) {
-                sendNotification(title);
-                notifiedVideos.add(title);
+            if (nextVideo) {
+                nextBubble.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.querySelectorAll('.message-bubble').forEach(b => b.classList.remove('playing'));
+                nextBubble.classList.add('playing');
+                nextVideo.play();
             }
         }
 
-        function setupAutoPlay() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    const video = entry.target.querySelector('video');
-                    const title = entry.target.querySelector('.title-tag').innerText;
-                    if (entry.isIntersecting) {
-                        video.play().catch(() => { video.muted = true; video.play(); });
-                        if (!notifiedVideos.has(title)) {
-                            sendNotification(title);
-                            notifiedVideos.add(title);
-                        }
-                    } else {
-                        video.pause();
-                        video.currentTime = 0;
-                    }
-                });
-            }, { threshold: 0.7 });
-            document.querySelectorAll('.video-section').forEach(s => observer.observe(s));
-        }
-
-        initApp();
+        tg.ready();
+        notifyVisit();
+        loadVideos();
     </script>
 </body>
 </html>
