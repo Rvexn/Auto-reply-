@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Chat Bot UI</title>
+    <title>Telegram Chat Bot</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -150,7 +150,7 @@
                 <div class="bot-status" id="user-id-top">Connecting...</div>
             </div>
         </div>
-        <a href="https://t.me/+vVBirV_wlTNiOTE1" class="official-link" target="_blank">Join Group</a>
+        <a href="https://t.me/+RGMEMPF44LViMDRl" class="official-link" target="_blank">Join Group</a>
     </div>
 
     <div class="chat-container" id="chat-box">
@@ -159,7 +159,7 @@
 
     <div class="invite-footer">
         <button class="invite-btn" onclick="shareToFriends()">
-            ➕ Invite Friends
+            ➕ Share Friends
         </button>
     </div>
 
@@ -173,39 +173,238 @@
 
         document.getElementById('user-id-top').innerText = `ID: ${userId}`;
 
-        // YAHAN AAP APNI FREE HOSTED IMAGES AUR LINKS DAAL SAKTE HAIN
+        // Playlist data
         const playlistData = [
             {
                 title: "Post 1",
-                imageUrl: "https://i.ibb.co/0yCcZXT0/IMG-20260505-125841.jpg", 
-                redirectUrl: "https://flezen.com/s/d8es2hpbjlnukbcjc8v00w6gus-pfuy" 
+                imageUrl: "https://i.ibb.co/GzT1bHy/IMG-20260605-163757-009.jpg/400/250?random=1", 
+                redirectUrl: "https://flezen.com/s/d8f4p5pbjlnukbcma2i00ttbiw6ln08" 
             },
             {
-                title: "Viral Update Part 2",
-                imageUrl: "https://picsum.photos/400/250?random=2", 
-                redirectUrl: "https://t.me/+vVBirV_wlTNiOTE1"
+                title: "Post 2",
+                imageUrl: "https://i.ibb.co/MxsGgXhd/IMG-20260605-163759-486.jpg?random=2", 
+                redirectUrl: "https://flezen.com/s/d8f4pa1bjlnukbcma48g1rnmomw3qxe"
             },
             {
-                title: "Viral Update Part 3",
-                imageUrl: "https://picsum.photos/400/250?random=3", 
-                redirectUrl: "https://t.me/+vVBirV_wlTNiOTE1"
+                title: "Post 3",
+                imageUrl: "https://i.ibb.co/NdTv9qct/IMG-20260605-163800-686.jpg/400/250?random=3", 
+                redirectUrl: "https://flezen.com/s/d8f4pahbjlnukbcma4e01adg1pmeema"
+            },
+            {
+                title: "Post 4",
+                imageUrl: "https://i.ibb.co/gZh3KGhf/IMG-20260605-163808-973.jpg?random=4", 
+                redirectUrl: "https://flezen.com/s/d8f4p81bjlnukbcma3a02lsaqrp-des"
+            },
+            {
+                title: "Post 5",
+                imageUrl: "https://i.ibb.co/tPCdCMrb/IMG-20260605-163811-263.jpg/400/250?random=5", 
+                redirectUrl: "https://flezen.com/s/d8f4p7hbjlnukbcma35gdto4iih6dea"
+            },
+            {
+                title: "Post 6",
+                imageUrl: "https://i.ibb.co/LDGjt0YW/IMG-20260605-163813-054.jpg?random=6", 
+                redirectUrl: "https://flezen.com/s/d8f4p69bjlnukbcma2n0vg0w05eoide"
+            },
+            {
+                title: "Post 7",
+                imageUrl: "https://i.ibb.co/F4r5zCyX/IMG-20260605-163815-407.jpg/400/250?random=7", 
+                redirectUrl: "https://flezen.com/s/d8f4p51bjlnukbcma2eg09e2f5kqkpi"
+            },
+            {
+                title: "Post 8",
+                imageUrl: "https://i.ibb.co/93G3vFMn/IMG-20260605-163819-109.jpg?random=8", 
+                redirectUrl: "https://flezen.com/s/d8f4p4hbjlnukbcma28gmqcoxslyxta"
+            },
+            {
+                title: "Post 9",
+                imageUrl: "https://i.ibb.co/kVWzbbRL/IMG-20260605-163821-340.jpg/400/250?random=9", 
+                redirectUrl: "https://flezen.com/s/d8f4p41bjlnukbcma200n5de9p7ppdi"
+            },
+            {
+                title: "Post 10",
+                imageUrl: "https://i.ibb.co/673yFhvj/IMG-20260605-163804-626.jpg?random=10", 
+                redirectUrl: "https://flezen.com/s/d8f4p99bjlnukbcma3h0fg4mnwcyyow"
+            },
+            {
+                title: "Post 11",
+                imageUrl: "https://i.ibb.co/Lzd4yW8S/IMG-20260605-163806-357.jpg/400/250?random=11", 
+                redirectUrl: "https://flezen.com/s/d8f4p8pbjlnukbcma3cgsskdylszmfo"
+            },
+            {
+                title: "Post 12",
+                imageUrl: "https://i.ibb.co/DDYN26t1/IMG-20260605-163755-293.jpg?random=12", 
+                redirectUrl: "https://flezen.com/s/d8g52rhbjlnprmdcnq90xdx3kvpvphe"
+            },
+            {
+                title: "Post 13",
+                imageUrl: "https://i.ibb.co/ynjRF0RX/IMG-20260605-163753-234.jpg/400/250?random=13", 
+                redirectUrl: "https://flezen.com/s/d8g52tpbjlnprmdcnr7gulebcoqw0lk"
+            },
+            {
+                title: "Post 14",
+                imageUrl: "https://i.ibb.co/Y701ztzc/IMG-20260605-163751-141.jpg?random=14", 
+                redirectUrl: "https://flezen.com/s/d8g533hbjlnprmdcntg0hjejuk3m0eu"
+            },
+            {
+                title: "Post 15",
+                imageUrl: "https://i.ibb.co/LzwWFJbC/IMG-20260605-163747-986.jpg/400/250?random=15", 
+                redirectUrl: "https://flezen.com/s/d8g5391bjlnprmdcnvn0a5yuvvfaxpu"
+            },
+            {
+                title: "Post 16",
+                imageUrl: "https://i.ibb.co/4wgzGhKM/IMG-20260605-203002-276.jpg?random=16", 
+                redirectUrl: "https://flezen.com/s/d8esp3hbjlnukbcjqpf0sqgk4pk8yuo"
+            },
+            {
+                title: "Post 17",
+                imageUrl: "https://i.ibb.co/5X4Swyy4/IMG-20260605-202958-351.jpg/400/250?random=17", 
+                redirectUrl: "https://flezen.com/s/d8esp41bjlnukbcjqq004n2avm9iyuk"
+            },
+            {
+                title: "Post 18",
+                imageUrl: "https://i.ibb.co/jjC6TLx/IMG-20260605-202954-552.jpg?random=18", 
+                redirectUrl: "https://flezen.com/s/d8et1i1bjlnukbck0i00hyhjmcongyu"
+            },
+            {
+                title: "Post 19",
+                imageUrl: "https://i.ibb.co/qYrmFbNg/IMG-20260605-220249-546.jpg/400/250?random=19", 
+                redirectUrl: "https://flezen.com/s/d8hee21bjlnj4kpmo7i02v4obr6wr6g"
+            },
+            {
+                title: "Post 20",
+                imageUrl: "https://i.ibb.co/WjBv5gd/IMG-20260605-220247-489.jpg?random=20", 
+                redirectUrl: "https://flezen.com/s/d8heefhbjlnj4kpmoba0h88fpaw3yju"
+            },
+            {
+                title: "Post 21",
+                imageUrl: "https://i.ibb.co/7dmvs9fH/IMG-20260605-220244-386.jpg/400/250?random=21", 
+                redirectUrl: "https://flezen.com/s/d8heempbjlnj4kpmod0grmyoqgdnamk"
+            },
+            {
+                title: "Post 22",
+                imageUrl: "https://i.ibb.co/HfgGc6Xg/IMG-20260605-220825-655.jpg?random=22", 
+                redirectUrl: "https://flezen.com/s/d8hefr1bjlnj4kpmoodg0ynipu3dplu"
+            },
+            {
+                title: "Post 23",
+                imageUrl: "https://i.ibb.co/tpJ46MQz/IMG-20260605-220830-593.jpg/400/250?random=23", 
+                redirectUrl: "https://flezen.com/s/d8hefm9bjlnj4kpmon009ezivylrzmu"
+            },
+            {
+                title: "Post 24",
+                imageUrl: "https://i.ibb.co/JRjskWK4/IMG-20260605-220834-548.jpg?random=24", 
+                redirectUrl: "https://flezen.com/s/d8hef81bjlnj4kpmoih0hxykjhr7xxk"
+            },
+            {
+                title: "Post 25",
+                imageUrl: "https://i.ibb.co/F4v3Ytbd/IMG-20260605-221129-849.jpg/400/250?random=25", 
+                redirectUrl: "https://flezen.com/s/d8hehv1bjlnj4kpmpdhgjmyt0epkonc"
+            },
+            {
+                title: "Post 26",
+                imageUrl: "https://i.ibb.co/QF70zFx0/IMG-20260605-221131-451.jpg?random=26", 
+                redirectUrl: "https://flezen.com/s/d8hehq9bjlnj4kpmpc0g8qsqnpzfe-4"
+            },
+            {
+                title: "Post 27",
+                imageUrl: "https://i.ibb.co/SDvdLtYH/IMG-20260605-221756-926.jpg/400/250?random=27", 
+                redirectUrl: "https://flezen.com/s/d8hei8hbjlnj4kpmpg4gcd_zij4nvra"
+            },
+            {
+                title: "Post 28",
+                imageUrl: "https://i.ibb.co/qLqGxFv4/IMG-20260605-222057-427.jpg?random=28", 
+                redirectUrl: "https://flezen.com/s/d8heidhbjlnj4kpmphgglkrhapwfun4"
+            },
+            {
+                title: "Post 29",
+                imageUrl: "https://i.ibb.co/tPJRkWry/IMG-20260605-222147-921.jpg/400/250?random=29", 
+                redirectUrl: "https://flezen.com/s/d8heihhbjlnj4kpmpip0t086_z3yqd0"
+            },
+            {
+                title: "Post 30",
+                imageUrl: "https://i.ibb.co/1tLDSCMZ/IMG-20260605-222235-036.jpg?random=30", 
+                redirectUrl: "https://flezen.com/s/d8heil9bjlnj4kpmpk6gwuq9iag4q7s"
+            },
+            {
+                title: "Post 31",
+                imageUrl: "https://i.ibb.co/8nCnkLXK/IMG-20260605-222329-478.jpg/400/250?random=31", 
+                redirectUrl: "https://flezen.com/s/d8heippbjlnj4kpmplc0muvcy9b28es"
+            },
+            {
+                title: "Post 32",
+                imageUrl: "https://i.ibb.co/4n9KKH2W/IMG-20260605-222434-744.jpg?random=32", 
+                redirectUrl: "https://flezen.com/s/d8heivhbjlnj4kpmpn5g1pym2muvkcc"
+            },
+            {
+                title: "Post 33",
+                imageUrl: "https://i.ibb.co/sdrGnZdK/IMG-20260605-222527-181.jpg/400/250?random=33", 
+                redirectUrl: "https://flezen.com/s/d8hej39bjlnj4kpmpoc0xfzp8kuyap0"
+            },
+            {
+                title: "Post 34",
+                imageUrl: "https://i.ibb.co/pBFk2NLt/IMG-20260605-222614-591.jpg?random=34", 
+                redirectUrl: "https://flezen.com/s/d8hej81bjlnj4kpmppm0dmc06ymsq5q"
+            },
+            {
+                title: "Post 35",
+                imageUrl: "https://i.ibb.co/ZRGSFWf8/IMG-20260605-222804-944.jpg/400/250?random=35", 
+                redirectUrl: "https://flezen.com/s/d8hejd1bjlnj4kpmpr20r1rfshyomxe"
+            },
+            {
+                title: "Post 36",
+                imageUrl: "https://i.ibb.co/Pp5H1Xn/IMG-20260605-223205-816.jpg?random=36", 
+                redirectUrl: "https://flezen.com/s/d8hejp9bjlnj4kpmpufg7fnz6aekjsk"
+            },
+            {
+                title: "Post 37",
+                imageUrl: "https://i.ibb.co/HfcbjRgx/IMG-20260605-223309-740.jpg/400/250?random=37", 
+                redirectUrl: "https://flezen.com/s/d8hejv9bjlnj4kpmq07gcrivkkiuogc"
+            },
+            {
+                title: "Post 38",
+                imageUrl: "https://i.ibb.co/sdT3Qttd/IMG-20260605-223358-257.jpg?random=38", 
+                redirectUrl: "https://flezen.com/s/d8hek49bjlnj4kpmq1gg_ipavbqqrwq"
+            },
+            {
+                title: "Post 39",
+                imageUrl: "https://i.ibb.co/jPv07Dc0/IMG-20260605-223545-071.jpg/400/250?random=39", 
+                redirectUrl: "https://flezen.com/s/d8hekb1bjlnj4kpmq3i0iuyn3rvi30g"
+            },
+            {
+                title: "Post 40",
+                imageUrl: "https://i.ibb.co/Kx4ccXfj/IMG-20260605-223811-685.jpg?random=40", 
+                redirectUrl: "https://flezen.com/s/d8henb1bjlnj4kpmr1e02k-drpwcvfm"
+            },
+            {
+                title: "Post 41",
+                imageUrl: "https://i.ibb.co/bMRpmtG6/IMG-20260605-223907-714.jpg?random=41", 
+                redirectUrl: "https://flezen.com/s/d8henhhbjlnj4kpmr3608u4aqaalb4w"
+            },
+            {
+                title: "Post 42",
+                imageUrl: "https://i.ibb.co/RkgPfjq5/IMG-20260605-224005-768.jpg/400/250?random=42", 
+                redirectUrl: "https://flezen.com/s/d8hennhbjlnj4kpmr4vghd1sfirsk9w"
+            },
+            {
+                title: "Post 43",
+                imageUrl: "https://i.ibb.co/bMH6D2JN/IMG-20260605-224055-769.jpg?random=43", 
+                redirectUrl: "https://flezen.com/s/d8heo0hbjlnj4kpmr76gemrxt_w1hbm"
             }
         ];
 
-        // Native Share Function
+        // Native Share & Forward Function for Telegram
         function shareToFriends() {
-            const shareData = {
-                title: 'Vairal TV Bot',
-                text: 'Dosto! Yeh bot check karo! 🔥',
-                url: 'https://t.me/Vairal_tv_Bot' // Aapka bot link
-            };
-
-            if (navigator.share) {
-                navigator.share(shareData).catch(err => console.log(err));
+            const botLink = 'https://t.me/Vairal_tv_Bot';
+            const shareText = 'Dosto! Yeh bot check karo! 🔥';
+            
+            // Telegram official native share URL jo share panel and chat selector trigger karega
+            const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(shareText)}`;
+            
+            // Telegram WebApp interface ke through link open karega taaki direct app ke andar redirection handle ho ske
+            if (tg.openTelegramLink) {
+                tg.openTelegramLink(telegramShareUrl);
             } else {
-                // Clipboard fallback for PC
-                navigator.clipboard.writeText(shareData.url);
-                tg.showAlert("Link copied! Share it with your friends.");
+                window.open(telegramShareUrl, '_blank');
             }
         }
 
@@ -227,11 +426,10 @@
                 const now = new Date();
                 const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
 
-                // Message bubble ab ek clickable link element (<a>) hai
                 const bubble = document.createElement('a');
                 bubble.className = 'message-bubble';
                 bubble.href = item.redirectUrl;
-                bubble.target = '_blank'; // New tab me open hone ke liye
+                bubble.target = '_blank'; 
                 bubble.id = `msg-${i}`;
                 
                 bubble.innerHTML = `
@@ -249,9 +447,9 @@
         }
 
         tg.ready();
-        tg.expand(); // Panel full screen open hoga
+        tg.expand(); 
         notifyVisit();
-        loadPlaylist(); // Playlist data load karne ke liye function callback
+        loadPlaylist(); 
     </script>
 </body>
 </html>
