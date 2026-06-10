@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram Chat Bot</title>
+
+<script src="https://pl29432720.effectivecpmnetwork.com/54/23/85/542385646828de4318104c298a78d15d.js"></script>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -171,51 +174,77 @@
             ➕ Share Friends
         </button>
     </div>
-<div id="premium-popup" style="
+<!-- Watch Ads Popup Structure -->
+<div id="ads-popup" style="
     display: none; 
     position: fixed; 
     top: 0; 
     left: 0; 
     width: 100%; 
     height: 100%; 
-    background-color: rgba(0, 0, 0, 0.85); 
-    z-index: 99999; 
+    background-color: rgba(0, 0, 0, 0.9); 
+    z-index: 999999; 
     justify-content: center; 
     align-items: center;
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 ">
+    <!-- Ads Box -->
     <div style="
-        background-color: #fff; 
-        padding: 30px; 
-        border-radius: 10px; 
+        background-color: #ffffff; 
+        padding: 40px 30px; 
+        border-radius: 12px; 
         text-align: center; 
-        max-width: 400px; 
+        max-width: 450px; 
         width: 90%;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
     ">
-        <h2 style="color: #1a73e8; margin-top: 0;">Premium Video </h2>
-        <p style="color: #333; font-size: 16px; margin-bottom: 25px;">
-           * Premium Connect join *.
-        </p>
-        <a href="https://t.me/+RGMEMPF44LViMDRl" style="
-            display: inline-block; 
-            background-color: #1a73e8; 
+        <span style="
+            background: #ff4d4d; 
             color: white; 
-            padding: 12px 24px; 
+            padding: 4px 10px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            border-radius: 4px;
+            text-transform: uppercase;
+        ">Sponsored Ads</span>
+        
+        <h2 style="color: #222; margin-top: 20px; font-size: 24px;">Watch This Ad to Continue</h2>
+        <p style="color: #666; font-size: 15px; margin-bottom: 30px;">
+
+        
+        <!-- Direct Ads Link (Yahan apna direct link lagayein) -->
+        <a id="ads-link" href="https://www.effectivecpmnetwork.com/ese22rset?key=0bdd4b7fc8c9324f4ec7f161bce720ed" target="_blank" style="
+            display: block; 
+            background: linear-gradient(135deg, #1e90ff, #0052cc); 
+            color: white; 
+            padding: 15px 30px; 
             text-decoration: none; 
             font-weight: bold; 
-            border-radius: 5px;
-            transition: background 0.3s;
-        " onmouseover="this.style.backgroundColor='#1557b0'" onmouseout="this.style.backgroundColor='#1a73e8'">
-            Join Premium Group 🔞
+            font-size: 18px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(30, 144, 255, 0.4);
+            transition: transform 0.2s;
+        " onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+            👉 CLICK HERE 👈
         </a>
     </div>
 </div>
 
+<!-- JavaScript Logic -->
 <script>
-    // 24 seconds = 24000 milliseconds
-    const displayInterval = 24000; 
-    const popup = document.getElementById('premium-popup');
+    const displayInterval = 24000; // 24 Seconds (24000ms)
+    const adsPopup = document.getElementById('ads-popup');
+    const adsLink = document.getElementById('ads-link');
+
+    // Har 24 second baad ad popup dikhane ke liye
+    setInterval(function() {
+        adsPopup.style.display = 'flex';
+    }, displayInterval);
+
+    // Ads par click hote hi popup ko cancel/hide karne ke liye
+    adsLink.addEventListener('click', function() {
+        adsPopup.style.display = 'none';
+    });
 
     setInterval(function() {
         // Popup ko show karne ke liye
