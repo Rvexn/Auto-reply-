@@ -1,371 +1,619 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Chat Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Telegram Mini App (Multi-Reshare Feed)</title>
 
-<script src="https://pl29432720.effectivecpmnetwork.com/54/23/85/542385646828de4318104c298a78d15d.js"></script>
-
+    <!-- 1. Telegram Mini App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background-color: #0e1621; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --trending: #ef4444;
+            --reshare: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             user-select: none;
+            -webkit-user-select: none;
         }
 
-        /* Header UI */
-        .chat-header {
-            background-color: #17212b;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #101921;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .bot-info { display: flex; align-items: center; gap: 10px; }
-        .bot-avatar {
-            width: 40px; height: 40px;
-            background: linear-gradient(45deg, #2aabee, #229ed9);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold;
-        }
-        .bot-name { color: white; font-size: 16px; font-weight: 500; }
-        .bot-status { color: #6ab3f3; font-size: 12px; }
-
-        .official-link {
-            color: #6ab3f3; text-decoration: none; font-size: 13px;
-            border: 1px solid #6ab3f3; padding: 4px 10px; border-radius: 15px;
-        }
-
-        /* Chat Body */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0px; /* Pure screen utilize karne ke liye padding 0 ki hai */
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-blend-mode: overlay;
-            scroll-behavior: smooth;
-            padding-bottom: 120px;
-        }
-
-        /* Full Screen UI updates (100% Width) */
-        .message-bubble {
-            width: 100%; /* Pure screen par stretch hoga */
-            max-width: 100%;
-            background-color: #131c26; /* Video ke piche premium slate look */
-            border-radius: 0px; /* Side edges zero taaki genuine player UI lage */
-            padding: 0px;
-            position: relative;
-            align-self: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            text-decoration: none;
-            display: block;
-        }
-        
-        /* Video Container Setup - Hard 16:9 Aspect Ratio */
-        .video-wrapper {
-            width: 100%;
-            border-radius: 0px; 
-            overflow: hidden;
-            background: #000;
-            position: relative;
-            aspect-ratio: 16/9; /* Perfect Cinema layout matching */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
         }
 
-        .chat-video-frame {
+        .app-frame {
+            width: 100%;
+            max-width: 100%;
+            height: 100vh;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 12px 16px;
+            background-color: var(--card-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .header h2 {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-box {
+            padding: 8px 16px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid #334155;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            outline: none;
+            font-size: 0.85rem;
+        }
+
+        .screens-container {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .scene {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            border: none;
-            display: block;
+            overflow-y: auto;
+            padding: 12px;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 80px; /* Space for bottom nav */
         }
 
-        .bubble-info {
-            padding: 12px 15px; /* Title aur time ke liye clear space */
+        .scene.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(100%);
+        }
+
+        .scene.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+
+        /* --- STANDARD CARD (Home Screen) --- */
+        .post-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+
+        .post-card:active {
+            transform: scale(0.98);
+        }
+
+        .featured-post {
+            border: 2px solid var(--primary);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .reshared-post {
+            border: 2px solid var(--reshare);
+            animation: fadeIn 0.4s ease-in-out;
+            margin-bottom: 12px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .trending-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--trending);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .reshare-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--reshare);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .section-header {
+            font-size: 0.75rem;
+            color: var(--text-sub);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #17212b;
-        }
-        .item-title { color: #fff; font-size: 15px; font-weight: 500; }
-        .msg-time { color: #7f91a4; font-size: 11px; margin-left: 10px; }
-
-        #chat-loader { color: #7f91a4; text-align: center; margin-top: 30px; font-size: 14px; }
-
-        .w-mark {
-            position: absolute;
-            top: 15px; right: 15px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 13px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-            pointer-events: none;
-            z-index: 2;
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.9);
-            white-space: nowrap;
+            margin-top: 4px;
         }
 
-        /* Invite Footer */
-        .invite-footer {
-            position: fixed;
-            bottom: 0; left: 0;
+        .post-img {
             width: 100%;
-            padding: 20px 15px;
-            background: linear-gradient(to top, #0e1621 85%, transparent);
-            display: flex;
-            justify-content: center;
-            z-index: 1000;
+            height: 160px;
+            object-fit: cover;
+            background-color: #0f172a;
+            display: block;
         }
 
-        .invite-btn {
-            background: linear-gradient(45deg, #00f2ea, #2aabee);
-            color: white;
-            border: none;
-            padding: 14px 40px;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(0, 242, 234, 0.4);
-            animation: pulse-effect 2s infinite;
+        .post-content {
+            padding: 10px;
+        }
+
+        .post-title {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        /* --- 3-COLUMN GRID UI (Middle Screen) --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .grid-card {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            background-color: var(--card-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #334155;
             cursor: pointer;
-            width: 90%;
+            transition: transform 0.15s ease, border-color 0.15s ease;
         }
 
-        @keyframes pulse-effect {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
+        .grid-card:active {
+            transform: scale(0.95);
+            border-color: var(--primary);
+        }
+
+        .grid-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(15, 23, 42, 0.85));
+            padding: 4px 6px;
+        }
+
+        .grid-title {
+            font-size: 0.65rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        /* Buttons Styling */
+        .post-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 6px 8px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-decoration: none;
+        }
+
+        .btn-primary { background-color: var(--primary); color: #fff; }
+        .btn-secondary { background-color: #334155; color: var(--text-main); }
+
+        /* --- BOTTOM NAVIGATION BAR UI --- */
+        .bottom-nav {
+            height: 60px;
+            background-color: var(--card-bg);
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 20;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 0.75rem;
+            cursor: pointer;
+            flex: 1;
+            padding: 8px 0;
+            transition: color 0.2s;
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .load-more-btn {
+            margin: 8px 0;
+            padding: 10px;
+            background: #334155;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
         }
     </style>
 </head>
-<body oncontextmenu="return false;"> 
-    <div class="chat-header">
-        <div class="bot-info">
-            <div class="bot-avatar">V</div>
-            <div>
-                <div class="bot-name">Vairal TV Bot</div>
-                <div class="bot-status" id="user-id-top">Connecting...</div>
+<body>
+
+    <div class="app-frame">
+        <!-- Top Header -->
+        <div class="header">
+            <h2 id="headerTitle"><i class="fa-solid fa-house"></i> Home Screen</h2>
+        </div>
+
+        <!-- Search Box -->
+        <div class="search-box">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search posts..." oninput="searchPosts()">
+        </div>
+
+        <!-- App Container -->
+        <div class="screens-container">
+            <!-- SCENE 1: HOME SCREEN -->
+            <div id="homeScene" class="scene active">
+                <div id="reshareContainer"></div>
+                <div id="trendingSlot"></div>
+                <div class="section-header">Regular Home Feeds</div>
+                <div id="homePostsContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                <button class="load-more-btn" onclick="loadMoreHome()">Load More Posts</button>
+            </div>
+
+            <!-- SCENE 2: ALL MIDDLE SCREEN (3-Column Grid View) -->
+            <div id="middleScene" class="scene hidden">
+                <div class="section-header">Middle Feeds (Tap post to Re-share on Home)</div>
+                <div id="middlePostsContainer" class="grid-container"></div>
+                <button class="load-more-btn" onclick="loadMoreMiddle()">Load More Posts</button>
             </div>
         </div>
-        <a href="https://t.me/+RGMEMPF44LViMDRl" class="official-link" target="_blank">Join Group</a>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <div class="bottom-nav">
+            <button class="nav-item active" id="navHome" onclick="showScene('home')">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" id="navMiddle" onclick="showScene('middle')">
+                <i class="fa-solid fa-border-all"></i>
+                <span>Middle</span>
+            </button>
+        </div>
     </div>
 
-    <div class="chat-container" id="chat-box">
-        <div id="chat-loader">Bot is typing...</div>
-    </div>
+    <script>
+        // Telegram WebApp Object Initialization
+        const tg = window.Telegram?.WebApp;
 
-    <div class="invite-footer">
-        <button class="invite-btn" onclick="shareToFriends()">
-            ➕ Share Friends
-        </button>
-    </div>
-<!-- Watch Ads Popup Structure -->
-<div id="ads-popup" style="
-    display: none; 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    background-color: rgba(0, 0, 0, 0.9); 
-    z-index: 999999; 
-    justify-content: center; 
-    align-items: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-">
-    <!-- Ads Box -->
-    <div style="
-        background-color: #ffffff; 
-        padding: 40px 30px; 
-        border-radius: 12px; 
-        text-align: center; 
-        max-width: 450px; 
-        width: 90%;
-        box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
-    ">
-        <span style="
-            background: #ff4d4d; 
-            color: white; 
-            padding: 4px 10px; 
-            font-size: 12px; 
-            font-weight: bold; 
-            border-radius: 4px;
-            text-transform: uppercase;
-        ">Sponsored Ads</span>
-        
-        <h2 style="color: #222; margin-top: 20px; font-size: 24px;">Watch This Ad to Continue</h2>
-        <p style="color: #666; font-size: 15px; margin-bottom: 30px;">
+        // Initialize Telegram WebApp Settings
+        if (tg) {
+            tg.ready();
+            tg.expand(); // Screen height full karne ke liye
+            if (tg.setHeaderColor) tg.setHeaderColor('#1e293b');
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#0f172a');
+        }
 
-        
-        <!-- Direct Ads Link (Yahan apna direct link lagayein) -->
-        <a id="ads-link" href="https://www.effectivecpmnetwork.com/ese22rset?key=0bdd4b7fc8c9324f4ec7f161bce720ed" target="_blank" style="
-            display: block; 
-            background: linear-gradient(135deg, #1e90ff, #0052cc); 
-            color: white; 
-            padding: 15px 30px; 
-            text-decoration: none; 
-            font-weight: bold; 
-            font-size: 18px;
-            border-radius: 6px;
-            box-shadow: 0 4px 15px rgba(30, 144, 255, 0.4);
-            transition: transform 0.2s;
-        " onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-            👉 CLICK HERE 👈
-        </a>
-    </div>
-</div>
-
-<!-- JavaScript Logic -->
-<script>
-    const displayInterval = 49000; // 49 Seconds (24000ms)
-    const adsPopup = document.getElementById('ads-popup');
-    const adsLink = document.getElementById('ads-link');
-
-    // Har 49 second baad ad popup dikhane ke liye
-    setInterval(function() {
-        adsPopup.style.display = 'flex';
-    }, displayInterval);
-
-    // Ads par click hote hi popup ko cancel/hide karne ke liye
-    adsLink.addEventListener('click', function() {
-        adsPopup.style.display = 'none';
-    });
-
-    setInterval(function() {
-        // Popup ko show karne ke liye
-        popup.style.display = 'flex';
-    }, displayInterval);
-        const NOTIFY_BOT_TOKEN = '8704006660:AAESM75BzNb1RpimTu-gswBUbCngbDWWU8c';
-        const CHAT_ID = '6262892880';
-
-        const tg = window.Telegram.WebApp;
-        const userId = tg.initDataUnsafe?.user?.id || "Unknown";
-        const userName = tg.initDataUnsafe?.user?.first_name || "Guest";
-
-        document.getElementById('user-id-top').innerText = `ID: ${userId}`;
-
-        const playlistData = [
-            {
-                title: "Viral Video Part 1",
-                embedUrl: "https://kamareels2.com/embed/6995"
-            },
-            {
-                title: "Viral Video Part 2",
-                embedUrl: "https://kamareels2.com/embed/8189"
-            },
-            {
-                title: "Viral Video Part 3",
-                embedUrl: "https://kamareels2.com/embed/7582"
-            },
-            {
-                title: "Viral Video Part 4",
-                embedUrl: "https://kamareels2.com/embed/6945"
-            },
-            {
-                title: "Viral Video Part 5",
-                embedUrl: "https://kamareels2.com/embed/8025"
-            },
-            {
-                title: "Viral Video Part 6",
-                embedUrl: "https://kamareels2.com/embed/7252"
-            },
-            {
-                title: "Viral Video Part 7",
-                embedUrl: "https://kamareels2.com/embed/328"
-            },
-            {
-                title: "Viral Video Part 8",
-                embedUrl: "https://kamareels2.com/embed/8105"
-            },
-            {
-                title: "Viral Video Part 9",
-                embedUrl: "https://kamareels2.com/embed/8176"
-            },
-            {
-                title: "Viral Video Part 10",
-                embedUrl: "https://kamareels2.com/embed/8091"
-            },
-            {
-                title: "Viral Video Part 11",
-                embedUrl: "https://kamareels2.com/embed/8089"
-            },
-            {
-                title: "Viral Video Part 12",
-                embedUrl: "https://kamareels2.com/embed/6993"
-            },
-            {
-                title: "Viral Video Part 12",
-                embedUrl: "https://kamareels2.com/embed/8149"
-            }
-        ];
-
-        function shareToFriends() {
-            const botLink = 'https://t.me/Vairal_tv_Bot';
-            const shareText = 'Dosto! Yeh bot check karo! 🔥';
-            const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(shareText)}`;
-            
-            if (tg.openTelegramLink) {
-                tg.openTelegramLink(telegramShareUrl);
+        // Native Link Opener for Telegram
+        function openLink(url) {
+            if (!url) return;
+            triggerHaptic();
+            if (tg && tg.openLink) {
+                tg.openLink(url);
             } else {
-                window.open(telegramShareUrl, '_blank');
+                window.open(url, '_blank');
             }
         }
 
-        async function notifyVisit() {
-            const msg = `🚀 *New Visitor!*\n👤 Name: ${userName}\n🆔 ID: ${userId}\n📂 Status: Watching Fresh Playlist`;
-            fetch(`https://api.telegram.org/bot${NOTIFY_BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
+        // Haptic Feedback for Native App Feel
+        function triggerHaptic() {
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
         }
 
-        function loadPlaylist() {
-            const chatBox = document.getElementById('chat-box');
-            document.getElementById('chat-loader').remove();
-
-            if (playlistData.length === 0) {
-                chatBox.innerHTML = "<div id='chat-loader'>No updates found.</div>";
-                return;
-            }
-
-            playlistData.forEach((item, i) => {
-                const now = new Date();
-                const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
-
-                const bubble = document.createElement('div');
-                bubble.className = 'message-bubble';
-                bubble.id = `msg-${i}`;
-                
-                bubble.innerHTML = `
-                    <div class="video-wrapper">
-                        <iframe src="${item.embedUrl}" class="chat-video-frame" allowfullscreen scrolling="no" allow="autoplay; encrypted-media"></iframe>
-                        <div class="w-mark">@Vairal_tv_bot</div>
-                    </div>
-                    <div class="bubble-info">
-                        <span class="item-title">${item.title}</span>
-                        <span class="msg-time">${time}</span>
-                    </div>
-                `;
-                chatBox.appendChild(bubble);
+        // Data Array (500 Posts)
+        const postsData = [];
+        for (let i = 1; i <= 500; i++) {
+            postsData.push({
+                id: i,
+                title: `Post #${i}: Direct Media Video & Link Content`,
+                image: `https://picsum.photos/300/300?random=${i}`,
+                actionLink: `https://example.com/action/${i}`,
+                buttonLink: `https://example.com/link/${i}`
             });
         }
 
-        tg.ready();
-        tg.expand(); 
-        notifyVisit();
-        loadPlaylist(); 
+        let homeIndex = 0;
+        let middleIndex = 0;
+        const limitHome = 10;
+        const limitMiddle = 21;
+        const MAX_RESHARE_LIMIT = 20;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadResharedPosts();
+
+            document.getElementById('trendingSlot').innerHTML = `
+                <div class="post-card featured-post" onclick="openLink('https://example.com/welcome')">
+                    <img src="https://picsum.photos/400/180?random=0" class="post-img" alt="Welcome">
+                    <div class="post-content">
+                        <div class="trending-badge"><i class="fa-solid fa-sparkles"></i> NEW VISITOR SPECIAL</div>
+                        <h3 class="post-title">Welcome! Click anywhere on this post to open link.</h3>
+                        <div class="post-buttons" onclick="event.stopPropagation()">
+                            <button class="btn btn-primary" onclick="openLink('https://example.com/welcome')">
+                                <i class="fa-solid fa-play"></i> Open Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            loadMoreHome();
+            loadMoreMiddle();
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'global_reshared_posts_list') {
+                loadResharedPosts();
+            }
+        });
+
+        function createHomeCard(post) {
+            return `
+                <div class="post-card" onclick="openLink('${post.actionLink}')">
+                    <img src="${post.image}" class="post-img" loading="lazy" alt="Post ${post.id}">
+                    <div class="post-content">
+                        <h3 class="post-title">${post.title}</h3>
+                        <div class="post-buttons" onclick="event.stopPropagation()">
+                            <button class="btn btn-primary" onclick="openLink('${post.actionLink}')">
+                                <i class="fa-solid fa-play"></i> Open
+                            </button>
+                            <button class="btn btn-secondary" onclick="openLink('${post.buttonLink}')">
+                                <i class="fa-solid fa-link"></i> Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createGridCard(post) {
+            return `
+                <div class="grid-card" onclick="reshareToAllMembers(${post.id})">
+                    <img src="${post.image}" class="grid-img" loading="lazy" alt="Post ${post.id}">
+                    <div class="grid-overlay">
+                        <div class="grid-title">#${post.id} Post</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadMoreHome() {
+            triggerHaptic();
+            const container = document.getElementById('homePostsContainer');
+            const nextBatch = postsData.slice(homeIndex, homeIndex + limitHome);
+            nextBatch.forEach(post => {
+                container.innerHTML += createHomeCard(post);
+            });
+            homeIndex += limitHome;
+        }
+
+        function loadMoreMiddle() {
+            triggerHaptic();
+            const container = document.getElementById('middlePostsContainer');
+            const nextBatch = postsData.slice(middleIndex, middleIndex + limitMiddle);
+            nextBatch.forEach(post => {
+                container.innerHTML += createGridCard(post);
+            });
+            middleIndex += limitMiddle;
+        }
+
+        function reshareToAllMembers(id) {
+            triggerHaptic();
+            const post = postsData.find(p => p.id === id);
+            if (!post) return;
+
+            let resharedList = [];
+            const stored = localStorage.getItem('global_reshared_posts_list');
+            if (stored) {
+                try { resharedList = JSON.parse(stored); } catch(e) { resharedList = []; }
+            }
+
+            const newItem = {
+                post: post,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            };
+
+            resharedList.unshift(newItem);
+
+            if (resharedList.length > MAX_RESHARE_LIMIT) {
+                resharedList = resharedList.slice(0, MAX_RESHARE_LIMIT);
+            }
+
+            localStorage.setItem('global_reshared_posts_list', JSON.stringify(resharedList));
+            renderResharedList(resharedList);
+            showScene('home');
+        }
+
+        function loadResharedPosts() {
+            const stored = localStorage.getItem('global_reshared_posts_list');
+            if (stored) {
+                try {
+                    const list = JSON.parse(stored);
+                    renderResharedList(list);
+                } catch(e) {}
+            }
+        }
+
+        function renderResharedList(list) {
+            const container = document.getElementById('reshareContainer');
+            if (!list || list.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `<div class="section-header" style="margin-bottom:8px;">
+                            <span><i class="fa-solid fa-arrows-rotate" style="color:var(--reshare)"></i> RE-SHARED FEEDS (${list.length}/${MAX_RESHARE_LIMIT})</span>
+                        </div>`;
+
+            list.forEach((item, index) => {
+                const post = item.post;
+                html += `
+                    <div class="post-card reshared-post" onclick="openLink('${post.actionLink}')">
+                        <img src="${post.image}" class="post-img" alt="Re-shared Post #${post.id}">
+                        <div class="post-content">
+                            <div class="reshare-badge">
+                                <i class="fa-solid fa-arrows-rotate"></i> RE-SHARED #${index + 1} (${item.timestamp})
+                            </div>
+                            <h3 class="post-title">${post.title}</h3>
+                            <div class="post-buttons" onclick="event.stopPropagation()">
+                                <button class="btn btn-primary" onclick="openLink('${post.actionLink}')">
+                                    <i class="fa-solid fa-play"></i> Open Post
+                                </button>
+                                <button class="btn btn-secondary" onclick="openLink('${post.buttonLink}')">
+                                    <i class="fa-solid fa-share-nodes"></i> Link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        let currentScene = 'home';
+        function showScene(sceneName) {
+            triggerHaptic();
+            const homeScene = document.getElementById('homeScene');
+            const middleScene = document.getElementById('middleScene');
+            const navHome = document.getElementById('navHome');
+            const navMiddle = document.getElementById('navMiddle');
+            const headerTitle = document.getElementById('headerTitle');
+
+            if (sceneName === 'home') {
+                homeScene.classList.replace('hidden', 'active');
+                middleScene.classList.replace('active', 'hidden');
+                
+                navHome.classList.add('active');
+                navMiddle.classList.remove('active');
+                headerTitle.innerHTML = '<i class="fa-solid fa-house"></i> Home Screen';
+                currentScene = 'home';
+            } else {
+                middleScene.classList.replace('hidden', 'active');
+                homeScene.classList.replace('active', 'hidden');
+                
+                navMiddle.classList.add('active');
+                navHome.classList.remove('active');
+                headerTitle.innerHTML = '<i class="fa-solid fa-border-all"></i> Middle Screen Grid';
+                currentScene = 'middle';
+            }
+        }
+
+        function searchPosts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = postsData.filter(p => p.title.toLowerCase().includes(query));
+
+            if (currentScene === 'home') {
+                const container = document.getElementById('homePostsContainer');
+                container.innerHTML = '';
+                filtered.slice(0, 15).forEach(post => container.innerHTML += createHomeCard(post));
+            } else {
+                const container = document.getElementById('middlePostsContainer');
+                container.innerHTML = '';
+                filtered.slice(0, 21).forEach(post => container.innerHTML += createGridCard(post));
+            }
+        }
     </script>
 </body>
 </html>
