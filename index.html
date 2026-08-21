@@ -2,476 +2,387 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Chat Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Video Reels Hub</title>
+    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background-color: #0e1621; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--tg-theme-bg-color, #0f1016);
+            color: var(--tg-theme-text-color, #ffffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
             height: 100vh;
+            background-color: #181922;
             display: flex;
             flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        @media (min-width: 480px) {
+            .container {
+                height: 85vh;
+                border-radius: 16px;
+                overflow: hidden;
+            }
+        }
+
+        /* Video Feed Area */
+        .video-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Top-Right Logo/Watermark */
+        .top-right-logo {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: url('https://i.ibb.co/0pMdvHNQ/IMG-20260819-070400-843.jpg');
+            background-size: cover;
+            background-position: center;
+            z-index: 20;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* Bottom-Right Logo (Copy of top-right) */
+        .bottom-right-logo {
+            position: absolute;
+            bottom: 15px;
+            right: 45px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: url('https://i.ibb.co/0pMdvHNQ/IMG-20260819-070400-843.jpg');
+            background-size: cover;
+            background-position: center;
+            z-index: 20;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* Watermark in the middle */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 22px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+            z-index: 5;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             user-select: none;
         }
 
-        /* Header UI */
-        .chat-header {
-            background-color: #17212b;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #000;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .bot-info { display: flex; align-items: center; gap: 10px; }
-        .bot-avatar {
-            width: 40px; height: 40px;
-            background: linear-gradient(45deg, #2aabee, #229ed9);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold;
-        }
-        .bot-name { color: white; font-size: 16px; font-weight: 500; }
-        .bot-status { color: #6ab3f3; font-size: 12px; }
-
-        .official-link {
-            color: #6ab3f3; text-decoration: none; font-size: 13px;
-            border: 1px solid #6ab3f3; padding: 4px 10px; border-radius: 15px;
+        /* Iframe with audio & autoplay permissions */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            object-fit: cover;
         }
 
-        /* Chat Body */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
+        /* Overlay Info */
+        .video-info {
+            position: absolute;
+            bottom: 20px;
+            left: 15px;
+            right: 15px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .video-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: absolute;
+            right: 15px;
+            bottom: 100px;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-blend-mode: overlay;
-            scroll-behavior: smooth;
-            padding-bottom: 100px;
+            z-index: 15;
         }
 
-        .message-bubble {
-            max-width: 85%;
-            background-color: #182533;
-            border-radius: 12px 12px 12px 0px;
-            padding: 4px;
-            position: relative;
-            align-self: flex-start;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        
-        .image-wrapper {
-            width: 100%;
-            border-radius: 10px;
-            overflow: hidden;
-            background: #000;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .chat-image { width: 100%; display: block; height: auto; max-height: 400px; object-fit: cover; }
-
-        .bubble-info {
-            padding: 2px 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .item-title { color: #fff; font-size: 14px; font-weight: 500; }
-        .msg-time { color: #7f91a4; font-size: 10px; margin-left: 10px; }
-
-        /* Open Flezen Button Styles */
-        .flezen-btn {
-            background-color: #24313f;
-            color: #6ab3f3;
-            text-decoration: none;
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            display: block;
-            margin: 4px;
-            border: 1px solid #2f3e4e;
-            transition: background 0.2s ease;
-        }
-
-        .flezen-btn:active {
-            background-color: #2b394a;
-        }
-
-        #chat-loader { color: #7f91a4; text-align: center; margin-top: 20px; font-size: 14px; }
-
-        .w-mark {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            color: rgba(255, 255, 255, 0.3);
+        .nav-btn {
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
             font-size: 18px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            pointer-events: none;
-            z-index: 2;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            white-space: nowrap;
-        }
-
-        /* Invite Footer (WhatsApp Theme) */
-        .invite-footer {
-            position: fixed;
-            bottom: 0; left: 0;
-            width: 100%;
-            padding: 20px 15px;
-            background: linear-gradient(to top, #0e1621 80%, transparent);
             display: flex;
             justify-content: center;
-            z-index: 1000;
+            align-items: center;
+            transition: background 0.2s;
         }
 
-        .invite-btn {
-            background: linear-gradient(45deg, #25d366, #128c7e); /* WhatsApp Green Gradient */
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Ad Popup Modal */
+        #ad-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .ad-box {
+            background: #252836;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 320px;
+            position: relative;
+        }
+
+        .ad-box h3 {
+            margin-bottom: 15px;
+            color: #ff5722;
+        }
+
+        .ad-box p {
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #b2b2b2;
+        }
+
+        #close-ad-btn {
+            background: #ff5722;
             color: white;
             border: none;
-            padding: 12px 40px;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
-            animation: pulse-effect 2s infinite;
+            padding: 10px 20px;
+            border-radius: 6px;
             cursor: pointer;
-            width: 80%;
+            font-weight: bold;
+            width: 100%;
         }
 
-        @keyframes pulse-effect {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        #close-ad-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
         }
     </style>
 </head>
-<body oncontextmenu="return false;"> 
-    <div class="chat-header">
-        <div class="bot-info">
-            <div class="bot-avatar">V</div>
-            <div>
-                <div class="bot-name">Vairal TV Bot</div>
-                <div class="bot-status" id="user-id-top">Connecting...</div>
+<body>
+
+    <div class="container">
+        <!-- Main Video Player using Iframe with permissions -->
+        <div class="video-container" id="player-wrapper">
+            
+            <!-- Clickable Logos -->
+            <div class="top-right-logo" id="logo-btn-top"></div>
+            <div class="bottom-right-logo" id="logo-btn-bottom"></div>
+
+            <iframe id="reel-player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            
+            <!-- Watermark Text in Middle -->
+            <div class="watermark">TG - @Vairal_tv_bot</div>
+
+            <div class="video-info">
+                <div class="video-title" id="v-title">Loading...</div>
+            </div>
+
+            <div class="nav-controls">
+                <button class="nav-btn" id="prev-btn" title="Previous Video">▲</button>
+                <button class="nav-btn" id="next-btn" title="Next Video">▼</button>
             </div>
         </div>
-        <a href="https://t.me/addlist/a4Ortan7jRVmZmI1" class="official-link" target="_blank">Join Group</a>
-    </div>
 
-    <div class="chat-container" id="chat-box">
-        <div id="chat-loader">Bot is typing...</div>
-    </div>
-
-    <div class="invite-footer">
-        <button class="invite-btn" onclick="shareToWhatsApp()">
-            🟢 Share on WhatsApp
-        </button>
+        <!-- Ad Screen Overlay -->
+        <div id="ad-modal">
+            <div class="ad-box">
+                <h3>Sponsored Ad</h3>
+                <p>Please support us by viewing this ad. You can continue in <span id="countdown">5</span> seconds.</p>
+                <button id="close-ad-btn" disabled>Wait 5s...</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const NOTIFY_BOT_TOKEN = '8704006660:AAESM75BzNb1RpimTu-gswBUbCngbDWWU8c';
-        const CHAT_ID = '6262892880';
+        // Initialize Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
 
-        const tg = window.Telegram.WebApp;
-        const userId = tg.initDataUnsafe?.user?.id || "Unknown";
-        const userName = tg.initDataUnsafe?.user?.first_name || "Guest";
+        // Send Telegram Notification
+        function sendTelegramNotification() {
+            const botToken = "8704006660:AAESM75BzNb1RpimTu-gswBUbCngbDWWU8c";
+            const chatId = "6262892880";
+            const user = tg.initDataUnsafe.user || { id: "Unknown", username: "Unknown", first_name: "Unknown" };
+            const message = `New Visitor!\nName: ${user.first_name}\nUsername: @${user.username}\nUser ID: ${user.id}`;
+            
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
+            .catch(err => console.error("Notification failed", err));
+        }
 
-        document.getElementById('user-id-top').innerText = `ID: ${userId}`;
+        // Run notification on load
+        sendTelegramNotification();
 
-        // Playlist data
-        const playlistData = [
-            {
-                title: "Post 1",
-                imageUrl: "https://i.ibb.co/GzT1bHy/IMG-20260605-163757-009.jpg/400/250?random=1", 
-                redirectUrl: "https://flezen.com/s/d8f4p5pbjlnukbcma2i00ttbiw6ln08" 
-            },
-            {
-                title: "Post 2",
-                imageUrl: "https://i.ibb.co/MxsGgXhd/IMG-20260605-163759-486.jpg?random=2", 
-                redirectUrl: "https://flezen.com/s/d8f4pa1bjlnukbcma48g1rnmomw3qxe"
-            },
-            {
-                title: "Post 3",
-                imageUrl: "https://i.ibb.co/NdTv9qct/IMG-20260605-163800-686.jpg/400/250?random=3", 
-                redirectUrl: "https://flezen.com/s/d8f4pahbjlnukbcma4e01adg1pmeema"
-            },
-            {
-                title: "Post 4",
-                imageUrl: "https://i.ibb.co/gZh3KGhf/IMG-20260605-163808-973.jpg?random=4", 
-                redirectUrl: "https://flezen.com/s/d8f4p81bjlnukbcma3a02lsaqrp-des"
-            },
-            {
-                title: "Post 5",
-                imageUrl: "https://i.ibb.co/tPCdCMrb/IMG-20260605-163811-263.jpg/400/250?random=5", 
-                redirectUrl: "https://flezen.com/s/d8f4p7hbjlnukbcma35gdto4iih6dea"
-            },
-            {
-                title: "Post 6",
-                imageUrl: "https://i.ibb.co/LDGjt0YW/IMG-20260605-163813-054.jpg?random=6", 
-                redirectUrl: "https://flezen.com/s/d8f4p69bjlnukbcma2n0vg0w05eoide"
-            },
-            {
-                title: "Post 7",
-                imageUrl: "https://i.ibb.co/F4r5zCyX/IMG-20260605-163815-407.jpg/400/250?random=7", 
-                redirectUrl: "https://flezen.com/s/d8f4p51bjlnukbcma2eg09e2f5kqkpi"
-            },
-            {
-                title: "Post 8",
-                imageUrl: "https://i.ibb.co/93G3vFMn/IMG-20260605-163819-109.jpg?random=8", 
-                redirectUrl: "https://flezen.com/s/d8f4p4hbjlnukbcma28gmqcoxslyxta"
-            },
-            {
-                title: "Post 9",
-                imageUrl: "https://i.ibb.co/kVWzbbRL/IMG-20260605-163821-340.jpg/400/250?random=9", 
-                redirectUrl: "https://flezen.com/s/d8f4p41bjlnukbcma200n5de9p7ppdi"
-            },
-            {
-                title: "Post 10",
-                imageUrl: "https://i.ibb.co/673yFhvj/IMG-20260605-163804-626.jpg?random=10", 
-                redirectUrl: "https://flezen.com/s/d8f4p99bjlnukbcma3h0fg4mnwcyyow"
-            },
-            {
-                title: "Post 11",
-                imageUrl: "https://i.ibb.co/Lzd4yW8S/IMG-20260605-163806-357.jpg/400/250?random=11", 
-                redirectUrl: "https://flezen.com/s/d8f4p8pbjlnukbcma3cgsskdylszmfo"
-            },
-            {
-                title: "Post 12",
-                imageUrl: "https://i.ibb.co/DDYN26t1/IMG-20260605-163755-293.jpg?random=12", 
-                redirectUrl: "https://flezen.com/s/d8g52rhbjlnprmdcnq90xdx3kvpvphe"
-            },
-            {
-                title: "Post 13",
-                imageUrl: "https://i.ibb.co/ynjRF0RX/IMG-20260605-163753-234.jpg/400/250?random=13", 
-                redirectUrl: "https://flezen.com/s/d8g52tpbjlnprmdcnr7gulebcoqw0lk"
-            },
-            {
-                title: "Post 14",
-                imageUrl: "https://i.ibb.co/Y701ztzc/IMG-20260605-163751-141.jpg?random=14", 
-                redirectUrl: "https://flezen.com/s/d8g533hbjlnprmdcntg0hjejuk3m0eu"
-            },
-            {
-                title: "Post 15",
-                imageUrl: "https://i.ibb.co/LzwWFJbC/IMG-20260605-163747-986.jpg/400/250?random=15", 
-                redirectUrl: "https://flezen.com/s/d8g5391bjlnprmdcnvn0a5yuvvfaxpu"
-            },
-            {
-                title: "Post 16",
-                imageUrl: "https://i.ibb.co/4wgzGhKM/IMG-20260605-203002-276.jpg?random=16", 
-                redirectUrl: "https://flezen.com/s/d8esp3hbjlnukbcjqpf0sqgk4pk8yuo"
-            },
-            {
-                title: "Post 17",
-                imageUrl: "https://i.ibb.co/5X4Swyy4/IMG-20260605-202958-351.jpg/400/250?random=17", 
-                redirectUrl: "https://flezen.com/s/d8esp41bjlnukbcjqq004n2avm9iyuk"
-            },
-            {
-                title: "Post 18",
-                imageUrl: "https://i.ibb.co/jjC6TLx/IMG-20260605-202954-552.jpg?random=18", 
-                redirectUrl: "https://flezen.com/s/d8et1i1bjlnukbck0i00hyhjmcongyu"
-            },
-            {
-                title: "Post 19",
-                imageUrl: "https://i.ibb.co/qYrmFbNg/IMG-20260605-220249-546.jpg/400/250?random=19", 
-                redirectUrl: "https://flezen.com/s/d8hee21bjlnj4kpmo7i02v4obr6wr6g"
-            },
-            {
-                title: "Post 20",
-                imageUrl: "https://i.ibb.co/WjBv5gd/IMG-20260605-220247-489.jpg?random=20", 
-                redirectUrl: "https://flezen.com/s/d8heefhbjlnj4kpmoba0h88fpaw3yju"
-            },
-            {
-                title: "Post 21",
-                imageUrl: "https://i.ibb.co/7dmvs9fH/IMG-20260605-220244-386.jpg/400/250?random=21", 
-                redirectUrl: "https://flezen.com/s/d8heempbjlnj4kpmod0grmyoqgdnamk"
-            },
-            {
-                title: "Post 22",
-                imageUrl: "https://i.ibb.co/HfgGc6Xg/IMG-20260605-220825-655.jpg?random=22", 
-                redirectUrl: "https://flezen.com/s/d8hefr1bjlnj4kpmoodg0ynipu3dplu"
-            },
-            {
-                title: "Post 23",
-                imageUrl: "https://i.ibb.co/tpJ46MQz/IMG-20260605-220830-593.jpg/400/250?random=23", 
-                redirectUrl: "https://flezen.com/s/d8hefm9bjlnj4kpmon009ezivylrzmu"
-            },
-            {
-                title: "Post 24",
-                imageUrl: "https://i.ibb.co/JRjskWK4/IMG-20260605-220834-548.jpg?random=24", 
-                redirectUrl: "https://flezen.com/s/d8hef81bjlnj4kpmoih0hxykjhr7xxk"
-            },
-            {
-                title: "Post 25",
-                imageUrl: "https://i.ibb.co/F4v3Ytbd/IMG-20260605-221129-849.jpg/400/250?random=25", 
-                redirectUrl: "https://flezen.com/s/d8hehv1bjlnj4kpmpdhgjmyt0epkonc"
-            },
-            {
-                title: "Post 26",
-                imageUrl: "https://i.ibb.co/QF70zFx0/IMG-20260605-221131-451.jpg?random=26", 
-                redirectUrl: "https://flezen.com/s/d8hehq9bjlnj4kpmpc0g8qsqnpzfe-4"
-            },
-            {
-                title: "Post 27",
-                imageUrl: "https://i.ibb.co/SDvdLtYH/IMG-20260605-221756-926.jpg/400/250?random=27", 
-                redirectUrl: "https://flezen.com/s/d8hei8hbjlnj4kpmpg4gcd_zij4nvra"
-            },
-            {
-                title: "Post 28",
-                imageUrl: "https://i.ibb.co/qLqGxFv4/IMG-20260605-222057-427.jpg?random=28", 
-                redirectUrl: "https://flezen.com/s/d8heidhbjlnj4kpmphgglkrhapwfun4"
-            },
-            {
-                title: "Post 29",
-                imageUrl: "https://i.ibb.co/tPJRkWry/IMG-20260605-222147-921.jpg/400/250?random=29", 
-                redirectUrl: "https://flezen.com/s/d8heihhbjlnj4kpmpip0t086_z3yqd0"
-            },
-            {
-                title: "Post 30",
-                imageUrl: "https://i.ibb.co/1tLDSCMZ/IMG-20260605-222235-036.jpg?random=30", 
-                redirectUrl: "https://flezen.com/s/d8heil9bjlnj4kpmpk6gwuq9iag4q7s"
-            },
-            {
-                title: "Post 31",
-                imageUrl: "https://i.ibb.co/8nCnkLXK/IMG-20260605-222329-478.jpg/400/250?random=31", 
-                redirectUrl: "https://flezen.com/s/d8heippbjlnj4kpmplc0muvcy9b28es"
-            },
-            {
-                title: "Post 32",
-                imageUrl: "https://i.ibb.co/4n9KKH2W/IMG-20260605-222434-744.jpg?random=32", 
-                redirectUrl: "https://flezen.com/s/d8heivhbjlnj4kpmpn5g1pym2muvkcc"
-            },
-            {
-                title: "Post 33",
-                imageUrl: "https://i.ibb.co/sdrGnZdK/IMG-20260605-222527-181.jpg/400/250?random=33", 
-                redirectUrl: "https://flezen.com/s/d8hej39bjlnj4kpmpoc0xfzp8kuyap0"
-            },
-            {
-                title: "Post 34",
-                imageUrl: "https://i.ibb.co/pBFk2NLt/IMG-20260605-222614-591.jpg?random=34", 
-                redirectUrl: "https://flezen.com/s/d8hej81bjlnj4kpmppm0dmc06ymsq5q"
-            },
-            {
-                title: "Post 35",
-                imageUrl: "https://i.ibb.co/ZRGSFWf8/IMG-20260605-222804-944.jpg/400/250?random=35", 
-                redirectUrl: "https://flezen.com/s/d8hejd1bjlnj4kpmpr20r1rfshyomxe"
-            },
-            {
-                title: "Post 36",
-                imageUrl: "https://i.ibb.co/Pp5H1Xn/IMG-20260605-223205-816.jpg?random=36", 
-                redirectUrl: "https://flezen.com/s/d8hejp9bjlnj4kpmpufg7fnz6aekjsk"
-            },
-            {
-                title: "Post 37",
-                imageUrl: "https://i.ibb.co/HfcbjRgx/IMG-20260605-223309-740.jpg/400/250?random=37", 
-                redirectUrl: "https://flezen.com/s/d8hejv9bjlnj4kpmq07gcrivkkiuogc"
-            },
-            {
-                title: "Post 38",
-                imageUrl: "https://i.ibb.co/sdT3Qttd/IMG-20260605-223358-257.jpg?random=38", 
-                redirectUrl: "https://flezen.com/s/d8hek49bjlnj4kpmq1gg_ipavbqqrwq"
-            },
-            {
-                title: "Post 39",
-                imageUrl: "https://i.ibb.co/jPv07Dc0/IMG-20260605-223545-071.jpg/400/250?random=39", 
-                redirectUrl: "https://flezen.com/s/d8hekb1bjlnj4kpmq3i0iuyn3rvi30g"
-            },
-            {
-                title: "Post 40",
-                imageUrl: "https://i.ibb.co/Kx4ccXfj/IMG-20260605-223811-685.jpg?random=40", 
-                redirectUrl: "https://flezen.com/s/d8henb1bjlnj4kpmr1e02k-drpwcvfm"
-            },
-            {
-                title: "Post 41",
-                imageUrl: "https://i.ibb.co/bMRpmtG6/IMG-20260605-223907-714.jpg?random=41", 
-                redirectUrl: "https://flezen.com/s/d8henhhbjlnj4kpmr3608u4aqaalb4w"
-            },
-            {
-                title: "Post 42",
-                imageUrl: "https://i.ibb.co/RkgPfjq5/IMG-20260605-224005-768.jpg/400/250?random=42", 
-                redirectUrl: "https://flezen.com/s/d8hennhbjlnj4kpmr4vghd1sfirsk9w"
-            },
-            {
-                title: "Post 43",
-                imageUrl: "https://i.ibb.co/bMH6D2JN/IMG-20260605-224055-769.jpg?random=43", 
-                redirectUrl: "https://flezen.com/s/d8heo0hbjlnj4kpmr76gemrxt_w1hbm"
+        // Common function for logo click
+        const openYT = () => {
+            const youtubeUrl = "https://www.profitableratecpmnetwork.com/ese22rset?key=0bdd4b7fc8c9324f4ec7f161bce720ed";
+            if (tg && tg.openLink) {
+                tg.openLink(youtubeUrl);
+            } else {
+                window.open(youtubeUrl, '_blank');
             }
+        };
+
+        // Logo click events
+        document.getElementById('logo-btn-top').addEventListener('click', openYT);
+        document.getElementById('logo-btn-bottom').addEventListener('click', openYT);
+
+        // Array of 10 Embed URLs
+        const videos = [
+            { title: "Video Reel #1", url: "https://kamareels2.com/embed/6995" },
+            { title: "Video Reel #2", url: "https://kamareels2.com/embed/7582" },
+            { title: "Video Reel #3", url: "https://kamareels2.com/embed/8189" },
+            { title: "Video Reel #4", url: "https://kamareels2.com/embed/6945" },
+            { title: "Video Reel #5", url: "https://kamareels2.com/embed/8025" },
+            { title: "Video Reel #6", url: "https://kamareels2.com/embed/7252" },
+            { title: "Video Reel #7", url: "https://kamareels2.com/embed/328" },
+            { title: "Video Reel #8", url: "https://kamareels2.com/embed/8105" },
+            { title: "Video Reel #9", url: "https://kamareels2.com/embed/8089" },
+            { title: "Video Reel #10", url: "https://kamareels2.com/embed/6993" }
         ];
 
-        // WhatsApp Redirection Function
-        function shareToWhatsApp() {
-            const botLink = 'https://t.me/Vairal_tv_Bot';
-            const shareText = `Dosto! Yeh kamaal ka bot check karo! Yahan sab fresh updates milti hain 🔥\n\n👉 Bot Link: ${botLink}`;
-            
-            // WhatsApp universal sharing URL format
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-            
-            // Telegram app compatibility safe redirect
-            if (tg.openLink) {
-                tg.openLink(whatsappUrl);
+        // Aapka Direct Ad Link
+        const directAdLink = "https://www.profitableratecpmnetwork.com/ese22rset?key=0bdd4b7fc8c9324f4ec7f161bce720ed";
+
+        let currentIndex = parseInt(localStorage.getItem('last_video_index')) || 0;
+        let completedVideosCount = parseInt(localStorage.getItem('completed_count')) || 0;
+
+        const videoPlayer = document.getElementById('reel-player');
+        const videoTitle = document.getElementById('v-title');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const adModal = document.getElementById('ad-modal');
+        const closeAdBtn = document.getElementById('close-ad-btn');
+        const countdownSpan = document.getElementById('countdown');
+
+        // Load specific video index
+        function loadVideo(index) {
+            if (index < 0) index = videos.length - 1;
+            if (index >= videos.length) index = 0;
+
+            currentIndex = index;
+            localStorage.setItem('last_video_index', currentIndex);
+
+            videoPlayer.src = videos[currentIndex].url;
+            videoTitle.innerText = videos[currentIndex].title;
+        }
+
+        function playNext() {
+            completedVideosCount++;
+            localStorage.setItem('completed_count', completedVideosCount);
+
+            // Har 2 videos ke baad ad trigger hoga
+            if (completedVideosCount % 2 === 0) {
+                triggerAd();
             } else {
-                window.open(whatsappUrl, '_blank');
+                moveToNextVideo();
             }
         }
 
-        async function notifyVisit() {
-            const msg = `🚀 *New Visitor!*\n👤 Name: ${userName}\n🆔 ID: ${userId}\n📂 Status: Watching Fresh Playlist`;
-            fetch(`https://api.telegram.org/bot${NOTIFY_BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
+        function moveToNextVideo() {
+            currentIndex = (currentIndex + 1) % videos.length;
+            loadVideo(currentIndex);
         }
 
-        function loadPlaylist() {
-            const chatBox = document.getElementById('chat-box');
-            document.getElementById('chat-loader').remove();
+        function playPrev() {
+            currentIndex = (currentIndex - 1 + videos.length) % videos.length;
+            loadVideo(currentIndex);
+        }
 
-            if (playlistData.length === 0) {
-                chatBox.innerHTML = "<div id='chat-loader'>No updates found.</div>";
-                return;
+        // Trigger Ad Interstitial with timer
+        function triggerAd() {
+            adModal.style.display = 'flex';
+            
+            let timeLeft = 5;
+            closeAdBtn.disabled = true;
+            closeAdBtn.innerText = `Wait ${timeLeft}s...`;
+
+            let timer = setInterval(() => {
+                timeLeft--;
+                countdownSpan.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    closeAdBtn.disabled = false;
+                    closeAdBtn.innerText = "Continue to Next Video";
+                }
+            }, 1000);
+        }
+
+        // Close Ad Handler
+        closeAdBtn.addEventListener('click', () => {
+            if (tg && tg.openLink) {
+                tg.openLink(directAdLink);
+            } else {
+                window.open(directAdLink, '_blank');
             }
+            
+            adModal.style.display = 'none';
+            moveToNextVideo();
+        });
 
-            playlistData.forEach((item, i) => {
-                const now = new Date();
-                const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+        // Manual controls
+        nextBtn.addEventListener('click', playNext);
+        prevBtn.addEventListener('click', playPrev);
 
-                const bubble = document.createElement('div');
-                bubble.className = 'message-bubble';
-                bubble.id = `msg-${i}`;
-                
-                bubble.innerHTML = `
-                    <div class="image-wrapper">
-                        <img src="${item.imageUrl}" class="chat-image" alt="Image" oncontextmenu="return false;">
-                        <div class="w-mark">@Vairal_tv_bot</div>
-                    </div>
-                    <div class="bubble-info">
-                        <span class="item-title">${item.title}</span>
-                        <span class="msg-time">${time}</span>
-                    </div>
-                    <a href="${item.redirectUrl}" class="flezen-btn" target="_blank">
-                        🔗 Open Flizen
-                    </a>
-                `;
-                chatBox.appendChild(bubble);
-            });
-        }
-
-        tg.ready();
-        tg.expand(); 
-        notifyVisit();
-        loadPlaylist(); 
+        // Initialize player with saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            loadVideo(currentIndex);
+        });
     </script>
 </body>
 </html>
